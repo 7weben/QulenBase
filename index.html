@@ -3,59 +3,154 @@
 <head>
     <title>Precision Dash</title>
     <style>
-        body { margin:0; padding:0; background:#111; overflow:hidden; touch-action:manipulation; height:100vh; }
-        #game-container { position:relative; background:#000; margin:auto; height:80vh; width:calc(80vh*1.5); max-width:90vw; border:3px solid #444; }
-        #player { position:absolute; width:45px; height:45px; background:url('UQH.gif') no-repeat; background-size:contain; transform:scaleX(-1); z-index:10; transition:top 0.15s; }
-        .obstacle { position:absolute; background:#FF5555; z-index:5; }
-        .spike.horizontal { clip-path:polygon(50% 0%,0% 100%,100% 100%); }
-        .spike.vertical { clip-path:polygon(0% 50%,100% 0%,100% 100%); }
-        #top-floor, #bottom-floor { position:absolute; width:100%; height:20px; background:#333; z-index:3; }
-        #top-floor { top:0; } #bottom-floor { bottom:0; }
-        #score-display { position:absolute; top:40px; left:50%; transform:translateX(-50%); font-size:28px; color:#FFD700; z-index:20; text-shadow:2px 2px 4px #000,0 0 10px rgba(255,215,0,0.5); }
-        #game-over { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.9); color:white; padding:20px; border-radius:10px; text-align:center; display:none; z-index:30; width:80%; max-width:400px; }
-        #restart-btn { background:#00FF00; border:none; padding:10px 20px; font-size:18px; border-radius:5px; cursor:pointer; margin-top:15px; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            overflow: hidden;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 90vw;
+            height: calc(90vw * 1.5);
+            max-width: 500px;
+            max-height: 750px;
+            margin: 20px auto;
+            background: #000;
+            border: 3px solid #444;
+            overflow: hidden;
+        }
+        #player {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: url('UQH.gif') no-repeat center/contain;
+            transform: scaleX(-1);
+            z-index: 10;
+            transition: top 0.15s ease;
+        }
+        .obstacle {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #FF5555;
+            z-index: 5;
+        }
+        .spike.horizontal {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .spike.vertical {
+            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+        }
+        #top-floor, #bottom-floor {
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            background: #333;
+            z-index: 3;
+        }
+        #top-floor { top: 0; }
+        #bottom-floor { bottom: 0; }
+        #score-display {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px #000;
+            z-index: 20;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 30;
+            width: 80%;
+        }
+        #restart-btn {
+            background: #00FF00;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="top-floor"></div><div id="bottom-floor"></div>
+        <div id="top-floor"></div>
+        <div id="bottom-floor"></div>
         <div id="player"></div>
         <div id="score-display">0</div>
         <div id="game-over">
-            <h2>Game Over!</h2><p>Score: <span id="final-score">0</span></p>
+            <h2>Game Over!</h2>
+            <p>Score: <span id="final-score">0</span></p>
             <button id="restart-btn">Play Again</button>
         </div>
     </div>
 
     <script>
-        // Game setup
+        // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
-        let gameHeight = gameContainer.offsetHeight;
-        let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 65;
-        let playerX = 50;
+        const scoreDisplay = document.getElementById('score-display');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Game variables
+        let gameHeight, gameWidth;
+        let playerY, playerX = 50;
         let isOnTopFloor = false;
         let gameIsRunning = false;
         let score = 0;
         let obstacles = [];
-        let baseSpeed = 6;
+        let lastObstacleTime = 0;
+        let animationId;
+        const baseSpeed = 6;
         let currentSpeed = baseSpeed;
         
         // Initialize game
         function init() {
-            playerY = gameHeight - 65;
+            gameHeight = gameContainer.offsetHeight;
+            gameWidth = gameContainer.offsetWidth;
+            playerY = gameHeight - 65; // 45px player + 20px floor
             playerX = 50;
             isOnTopFloor = false;
             score = 0;
             currentSpeed = baseSpeed;
-            document.getElementById('score-display').textContent = "0";
-            obstacles.forEach(o => o.element.remove());
+            
+            // Clear existing obstacles
+            obstacles.forEach(obstacle => {
+                if (obstacle.element.parentNode) {
+                    gameContainer.removeChild(obstacle.element);
+                }
+            });
             obstacles = [];
+            
+            // Reset player
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
-            document.getElementById('game-over').style.display = 'none';
+            
+            // Reset UI
+            scoreDisplay.textContent = "0";
+            gameOverScreen.style.display = 'none';
+            
+            // Start game
             gameIsRunning = true;
+            lastObstacleTime = Date.now();
             gameLoop();
         }
         
@@ -69,32 +164,34 @@
                 lastObstacleTime = Date.now();
             }
             
-            // Move obstacles
-            obstacles.forEach(obstacle => {
-                const x = parseFloat(obstacle.element.style.left) - currentSpeed;
-                obstacle.element.style.left = x + 'px';
+            // Move obstacles and check collisions
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                const obstacleX = parseFloat(obstacle.element.style.left) - currentSpeed;
+                obstacle.element.style.left = obstacleX + 'px';
                 
-                // Check collisions
-                if (playerX < x + 30 && playerX + 45 > x && 
-                    playerY < obstacle.y + 30 && playerY + 45 > obstacle.y) {
+                // Check collision
+                if (playerX < obstacleX + 30 && 
+                    playerX + 45 > obstacleX && 
+                    playerY < obstacle.y + 30 && 
+                    playerY + 45 > obstacle.y) {
                     gameOver();
                 }
                 
-                // Remove off-screen obstacles and increase score
-                if (x < -100) {
-                    obstacle.element.remove();
-                    obstacles = obstacles.filter(o => o !== obstacle);
+                // Remove off-screen obstacles
+                if (obstacleX < -100) {
+                    gameContainer.removeChild(obstacle.element);
+                    obstacles.splice(i, 1);
                     score++;
-                    document.getElementById('score-display').textContent = score;
-                    currentSpeed = baseSpeed + (score * 0.02);
+                    scoreDisplay.textContent = score;
+                    currentSpeed = baseSpeed + (score * 0.02); // Increase speed
                 }
-            });
+            }
             
-            requestAnimationFrame(gameLoop);
+            animationId = requestAnimationFrame(gameLoop);
         }
         
-        // Create obstacle pair
-        let lastObstacleTime = 0;
+        // Create pair of obstacles (top and bottom)
         function createObstaclePair() {
             // Bottom obstacle (always horizontal)
             createObstacle(gameHeight - 50, true);
@@ -110,10 +207,10 @@
             obstacle.style.left = gameWidth + 'px';
             obstacle.style.top = y + 'px';
             gameContainer.appendChild(obstacle);
-            obstacles.push({element: obstacle, y: y});
+            obstacles.push({ element: obstacle, y: y });
         }
         
-        // Switch floors
+        // Switch between floors
         function switchFloor() {
             if (!gameIsRunning) return;
             isOnTopFloor = !isOnTopFloor;
@@ -121,19 +218,37 @@
             player.style.top = playerY + 'px';
         }
         
-        // Game over
+        // End game
         function gameOver() {
             gameIsRunning = false;
-            document.getElementById('final-score').textContent = score;
-            document.getElementById('game-over').style.display = 'block';
+            cancelAnimationFrame(animationId);
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'block';
         }
         
         // Event listeners
-        document.addEventListener('keydown', e => e.code === 'Space' && (gameIsRunning ? switchFloor() : init()));
-        gameContainer.addEventListener('click', () => gameIsRunning ? switchFloor() : init());
-        document.getElementById('restart-btn').addEventListener('click', init);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (!gameIsRunning) {
+                    init();
+                } else {
+                    switchFloor();
+                }
+            }
+        });
         
-        // Start game
+        gameContainer.addEventListener('click', () => {
+            if (!gameIsRunning) {
+                init();
+            } else {
+                switchFloor();
+            }
+        });
+        
+        restartBtn.addEventListener('click', init);
+        
+        // Start the game
         init();
     </script>
 </body>
