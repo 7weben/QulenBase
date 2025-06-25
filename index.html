@@ -340,8 +340,6 @@
         let currentSpeedMultiplier = 1;
         let isShowingChallenge = false;
         let currentChallenge = null;
-        let lastObstaclePosition = 'bottom'; // Start with bottom floor
-        let patternBroken = false; // Track if we've broken the pattern
         
         // Initialize game dimensions
         function initGameSize() {
@@ -360,8 +358,6 @@
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
             currentChallenge = null;
-            lastObstaclePosition = 'bottom'; // Reset to bottom
-            patternBroken = false;
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -410,7 +406,7 @@
             
             // Generate new obstacles
             if (currentTime - lastObstacleTime > 1000) {
-                createObstacle();
+                createObstaclePair();
                 lastObstacleTime = currentTime;
             }
             
@@ -449,28 +445,19 @@
             }
         }
         
-        // Render game
-        function render() {
-            player.style.top = playerY + 'px';
+        // Create a pair of obstacles (top and bottom)
+        function createObstaclePair() {
+            // Create bottom obstacle (always present)
+            createObstacle(false);
+            
+            // Create top obstacle (always present)
+            createObstacle(true);
         }
         
-        // Create a new obstacle
-        function createObstacle() {
-            // Determine obstacle position (alternate between top and bottom with occasional breaks)
-            let isTopObstacle;
-            
-            // 10% chance to break the pattern (except on first obstacle)
-            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
-                isTopObstacle = lastObstaclePosition === 'top'; // Reverse the expected pattern
-                patternBroken = true;
-            } else {
-                // Follow the normal pattern
-                isTopObstacle = lastObstaclePosition === 'bottom';
-                patternBroken = false;
-            }
-            
+        // Create a single obstacle
+        function createObstacle(isTop) {
             // For top obstacles, decide if horizontal or vertical (50/50)
-            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
+            const isHorizontal = isTop ? Math.random() > 0.5 : true;
             
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
@@ -478,16 +465,14 @@
             let width = 30, height = 30;
             let y;
             
-            if (isTopObstacle) {
+            if (isTop) {
                 if (isHorizontal) {
                     y = 20; // Right on the top floor
                 } else {
                     y = 20 + Math.random() * (gameHeight - 100); // Somewhere between top and bottom
                 }
-                lastObstaclePosition = 'top';
             } else {
                 y = gameHeight - height - 20; // Right on the bottom floor
-                lastObstaclePosition = 'bottom';
             }
             
             obstacle.style.left = gameWidth + 'px';
@@ -517,7 +502,7 @@
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            currentSpeedMultiplier = 1 + (score * 0.011);
+            currentSpeedMultiplier = 1 + (score * 0.02); // Increased speed multiplier by 0.02 per score
         }
         
         // End the game
