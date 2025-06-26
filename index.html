@@ -2,267 +2,111 @@
 <html>
 <head>
     <title>Precision Dash</title>
-    <!-- Favicon Links -->
     <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
-    <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
-    <link rel="apple-touch-icon" href="https://iili.io/FIAXDDF.png">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
+        * { box-sizing: border-box; }
         body {
-            margin: 0;
-            padding: 0;
-            background: #111;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            touch-action: manipulation;
-            height: 100vh;
-            width: 100vw;
+            margin: 0; padding: 0; background: #111; font-family: Arial;
+            overflow: hidden; touch-action: manipulation; height: 100vh; width: 100vw;
         }
-        
         #game-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; width: 100vw;
         }
-        
         #game-container {
-            position: relative;
-            background: #000;
-            border: 3px solid #444;
-            border-radius: 5px;
-            overflow: hidden;
+            position: relative; background: #000; border: 3px solid #444;
+            border-radius: 5px; overflow: hidden;
         }
-
-        /* Mobile (3:4 aspect ratio) */
         @media (max-width: 768px), (orientation: portrait) {
-            #game-container {
-                width: 90vw;
-                height: calc(90vw * 1.333); /* 3:4 ratio */
-                max-height: 90vh;
-            }
+            #game-container { width: 90vw; height: calc(90vw * 1.333); max-height: 90vh; }
         }
-
-        /* Desktop (3:2 aspect ratio) */
         @media (min-width: 769px), (orientation: landscape) {
-            #game-container {
-                height: 80vh;
-                width: calc(80vh * 1.5); /* 3:2 ratio */
-                max-width: 90vw;
-            }
+            #game-container { height: 80vh; width: calc(80vh * 1.5); max-width: 90vw; }
         }
-        
         #game-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
+            position: absolute; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
             transition: opacity 0.5s ease;
         }
-        
         #player {
-            position: absolute;
-            width: 45px;
-            height: 45px;
-            background: transparent;
-            z-index: 10;
-            background-image: url('UQH.gif');
-            background-size: contain;
-            background-repeat: no-repeat;
-            transform: scaleX(-1);
-            transition: top 0.15s ease;
+            position: absolute; width: 45px; height: 45px; background: transparent;
+            z-index: 10; background-image: url('https://iili.io/JW5W4Yx.gif');
+            background-size: contain; background-repeat: no-repeat;
+            transform: scaleX(-1); transition: top 0.15s ease;
         }
-        
         .obstacle {
-            position: absolute;
-            z-index: 5;
-            background: #FF5555;
+            position: absolute; z-index: 5; background: #FF5555;
         }
-        
-        .spike.horizontal {
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
-        
-        .spike.vertical {
-            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
-        }
-        
+        .spike.horizontal { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .spike.vertical { clip-path: polygon(0% 50%, 100% 0%, 100% 100%); }
         #top-floor, #bottom-floor {
-            position: absolute;
-            width: 100%;
-            height: 20px;
-            background: rgba(51, 51, 51, 0.7);
-            z-index: 3;
+            position: absolute; width: 100%; height: 20px;
+            background: rgba(51, 51, 51, 0.7); z-index: 3;
         }
-        
-        #top-floor {
-            top: 0;
-        }
-        
-        #bottom-floor {
-            bottom: 0;
-        }
-        
+        #top-floor { top: 0; }
+        #bottom-floor { bottom: 0; }
         #score-display {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 28px;
-            color: #FFD700;
-            z-index: 20;
-            text-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 0.7),
-                0 0 10px rgba(255, 215, 0, 0.5);
-            font-weight: bold;
-            text-align: center;
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            font-size: 28px; color: #FFD700; z-index: 20;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7), 0 0 10px rgba(255,215,0,0.5);
+            font-weight: bold; text-align: center;
         }
-        
         #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            display: none;
-            z-index: 30;
-            width: 80%;
-            max-width: 400px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.9); color: white; padding: 20px;
+            border-radius: 10px; text-align: center; display: none;
+            z-index: 30; width: 80%; max-width: 400px;
         }
-        
         #restart-btn {
-            background-color: #00FF00;
-            border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 15px;
+            background-color: #00FF00; border: none; padding: 10px 20px;
+            font-size: 18px; border-radius: 5px; cursor: pointer; margin-top: 15px;
         }
-        
-        /* Challenge Popup Styles */
         #challenge-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 100; justify-content: center; align-items: center;
         }
-        
         #challenge-popup {
-            background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
+            background: #222; padding: 20px; border-radius: 10px;
+            width: 90%; max-width: 400px; position: relative;
         }
-        
         #close-challenge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
+            position: absolute; top: 10px; right: 10px;
+            background: transparent; border: none; color: white;
+            font-size: 20px; cursor: pointer;
         }
-        
-        #challenge-popup h2 {
-            color: white;
-            margin-top: 0;
-        }
-        
-        /* Tic Tac Toe Styles */
         .board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            margin: 15px auto;
-            width: 150px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 5px; margin: 15px auto; width: 150px;
         }
-        
         .cell {
-            width: 50px;
-            height: 50px;
-            background: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            cursor: pointer;
+            width: 50px; height: 50px; background: #333;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; cursor: pointer;
         }
-        
-        /* Word Guess Styles */
-        #word-guess {
-            display: none;
-        }
-        
-        #word-clue {
-            color: #FFD700;
-            font-size: 18px;
-            margin: 10px 0;
-        }
-        
+        #word-guess { display: none; }
+        #word-clue { color: #FFD700; font-size: 18px; margin: 10px 0; }
         #word-display {
-            font-size: 24px;
-            letter-spacing: 5px;
-            margin: 15px 0;
-            color: white;
+            font-size: 24px; letter-spacing: 5px;
+            margin: 15px 0; color: white;
         }
-        
         #word-input {
-            padding: 8px;
-            font-size: 16px;
-            width: 100%;
-            margin-bottom: 10px;
+            padding: 8px; font-size: 16px; width: 100%; margin-bottom: 10px;
         }
-        
         #submit-guess {
-            background: #00FF00;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
+            background: #00FF00; border: none; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer;
         }
-        
-        #challenge-result {
-            color: white;
-            margin: 10px 0;
-            min-height: 20px;
+        #challenge-result, #challenge-result-word {
+            color: white; margin: 10px 0; min-height: 20px;
         }
-        
-        #timer {
-            color: #FF5555;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
+        #timer, #word-timer {
+            color: #FF5555; font-size: 18px; font-weight: bold; margin: 10px 0;
         }
-        
         #ad-space {
-            background: #333;
-            padding: 10px;
-            margin-top: 20px;
-            text-align: center;
-            color: #aaa;
-            font-size: 14px;
+            background: #333; padding: 10px; margin-top: 20px;
+            text-align: center; color: #aaa; font-size: 14px;
         }
     </style>
 </head>
@@ -282,27 +126,15 @@
         </div>
     </div>
 
-    <!-- Hidden audio elements -->
-    <audio id="bg-music-1" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="bg-music-2" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="bg-music-3" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-racing-intense-energy-125.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="bg-music-4" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-happy-times-1580.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bg-music-1" loop><source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" type="audio/mpeg"></audio>
+    <audio id="bg-music-2" loop><source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg"></audio>
+    <audio id="bg-music-3" loop><source src="https://assets.mixkit.co/music/preview/mixkit-racing-intense-energy-125.mp3" type="audio/mpeg"></audio>
+    <audio id="bg-music-4" loop><source src="https://assets.mixkit.co/music/preview/mixkit-happy-times-1580.mp3" type="audio/mpeg"></audio>
 
-    <!-- Challenge Popup -->
     <div id="challenge-container">
         <div id="challenge-popup">
             <button id="close-challenge">✕</button>
             <h2>Continue Challenge!</h2>
-            
-            <!-- Tic Tac Toe Game -->
             <div id="tic-tac-toe">
                 <p id="challenge-result">Win in 10 seconds to continue!</p>
                 <div id="timer">Time left: 10</div>
@@ -318,8 +150,6 @@
                     <div class="cell" data-index="8"></div>
                 </div>
             </div>
-            
-            <!-- Word Guess Game -->
             <div id="word-guess">
                 <p id="challenge-result-word">Guess the word in 10 seconds!</p>
                 <div id="word-timer">Time left: 10</div>
@@ -328,10 +158,7 @@
                 <input type="text" id="word-input" placeholder="Your guess">
                 <button id="submit-guess">Submit</button>
             </div>
-            
-            <div id="ad-space">
-                Advertisement Space
-            </div>
+            <div id="ad-space">Advertisement Space</div>
         </div>
     </div>
 
@@ -371,7 +198,8 @@
         let currentBg = 'NBG.png';
         let bgChangedAtScore = 0;
         let currentMusicIndex = 0;
-        
+        let gameStarted = false;
+
         // Initialize game dimensions
         function initGameSize() {
             gameHeight = gameContainer.offsetHeight;
@@ -379,23 +207,18 @@
             playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
-            
-            // Set initial background
             gameBg.style.backgroundImage = `url('${currentBg}')`;
             gameBg.style.opacity = 1;
         }
-        
+
         // Change background with fade effect
         function changeBackground() {
             const nextBg = currentBg === 'NBG.png' ? 'DBG.png' : 'NBG.png';
-            
-            // Create temporary element for preloading
             const tempImg = new Image();
             tempImg.src = nextBg;
             
             tempImg.onload = function() {
                 gameBg.style.opacity = 0;
-                
                 setTimeout(() => {
                     currentBg = nextBg;
                     gameBg.style.backgroundImage = `url('${currentBg}')`;
@@ -404,43 +227,31 @@
                 }, 500);
             };
         }
-        
+
         // Play random music track
         function playRandomMusic() {
-            // Stop all audio tracks first
             audioElements.forEach(audio => {
                 audio.pause();
                 audio.currentTime = 0;
             });
             
-            // Select a new random track (different from current one)
             let newIndex;
             do {
                 newIndex = Math.floor(Math.random() * audioElements.length);
             } while (newIndex === currentMusicIndex && audioElements.length > 1);
             
             currentMusicIndex = newIndex;
-            
-            // Play the selected track
             audioElements[currentMusicIndex].volume = 0.3;
-            const playPromise = audioElements[currentMusicIndex].play();
-            
-            // Handle autoplay restrictions
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // Auto-play was prevented, show a play button
-                    console.log("Auto-play prevented, user interaction required");
-                });
-            }
+            audioElements[currentMusicIndex].play().catch(e => console.log("Audio play failed:", e));
         }
-        
+
         // Check if background should change
         function checkBackgroundChange() {
             if (score >= bgChangedAtScore + 100) {
                 changeBackground();
             }
         }
-        
+
         // Initialize game
         function init() {
             initGameSize();
@@ -456,10 +267,8 @@
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
-            // Play new random music
             playRandomMusic();
             
-            // Clear all obstacles
             obstacles.forEach(obstacle => {
                 if (obstacle.element.parentNode) {
                     gameContainer.removeChild(obstacle.element);
@@ -467,50 +276,47 @@
             });
             obstacles = [];
             
-            // Reset player position
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
-            // Hide game over screen
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
+            gameStarted = true;
         }
-        
+
         // Calculate current speed
         function getCurrentSpeed() {
             return baseSpeed * currentSpeedMultiplier;
         }
-        
+
         // Start game
         function startGame() {
+            if (gameIsRunning) return;
             init();
             gameIsRunning = true;
             lastObstacleTime = Date.now();
             gameLoop();
         }
-        
+
         // Game loop
         function gameLoop() {
             if (!gameIsRunning) return;
             
             update();
             render();
-            
             animationId = requestAnimationFrame(gameLoop);
         }
-        
+
         // Update game state
         function update() {
             const currentTime = Date.now();
             
-            // Generate new obstacles
             if (currentTime - lastObstacleTime > 1000) {
                 createObstacle();
                 lastObstacleTime = currentTime;
             }
             
-            // Move obstacles and check for collisions
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obstacle = obstacles[i];
                 const obstacleX = parseFloat(obstacle.element.style.left);
@@ -518,30 +324,22 @@
                 const obstacleWidth = parseFloat(obstacle.element.style.width);
                 const obstacleHeight = parseFloat(obstacle.element.style.height);
                 
-                // Move obstacle at current speed
                 obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
                 
-                // Check for collision with player
-                if (
-                    playerX < obstacleX + obstacleWidth &&
+                if (playerX < obstacleX + obstacleWidth &&
                     playerX + 45 > obstacleX &&
                     playerY < obstacleY + obstacleHeight &&
-                    playerY + 45 > obstacleY
-                ) {
+                    playerY + 45 > obstacleY) {
                     setTimeout(() => {
-                        if (!isShowingChallenge) {
-                            // Only show challenge if score >= 100
-                            if (score >= 100) {
-                                gameOver();
-                                showRandomChallenge();
-                            } else {
-                                gameOver();
-                            }
+                        if (!isShowingChallenge && score >= 100) {
+                            gameOver();
+                            showRandomChallenge();
+                        } else {
+                            gameOver();
                         }
                     }, 100);
                 }
                 
-                // Remove obstacles that are off screen
                 if (obstacleX < -100) {
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
@@ -550,12 +348,12 @@
                 }
             }
         }
-        
+
         // Render game
         function render() {
             player.style.top = playerY + 'px';
         }
-        
+
         // Create a new obstacle
         function createObstacle() {
             let isTopObstacle;
@@ -569,7 +367,6 @@
             }
             
             const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
-            
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
             
@@ -577,11 +374,7 @@
             let y;
             
             if (isTopObstacle) {
-                if (isHorizontal) {
-                    y = 20;
-                } else {
-                    y = 20 + Math.random() * (gameHeight - 100);
-                }
+                y = isHorizontal ? 20 : 20 + Math.random() * (gameHeight - 100);
                 lastObstaclePosition = 'top';
             } else {
                 y = gameHeight - height - 20;
@@ -594,39 +387,31 @@
             obstacle.style.top = y + 'px';
             
             gameContainer.appendChild(obstacle);
-            
-            obstacles.push({
-                element: obstacle,
-                width: width,
-                height: height,
-                y: y
-            });
+            obstacles.push({ element: obstacle, width, height, y });
         }
-        
+
         // Switch between top and bottom floor
         function switchFloor() {
             if (!gameIsRunning) return;
-            
             isOnTopFloor = !isOnTopFloor;
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
         }
-        
+
         // Increase score
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
             currentSpeedMultiplier = 1 + (score * 0.02);
         }
-        
+
         // End the game
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
-            
             finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
         }
-        
+
         // Show random challenge
         function showRandomChallenge() {
             isShowingChallenge = true;
@@ -645,19 +430,19 @@
                 startWordGuess();
             }
         }
-        
+
         /* ===== TIC TAC TOE GAME ===== */
         let currentPlayer = 'X';
         let gameBoard = ['', '', '', '', '', '', '', '', ''];
         let gameActive = true;
         let timer = 10;
         let timerInterval;
-        
+
         function startTicTacToe() {
             resetTicTacToe();
             startTimer();
         }
-        
+
         function resetTicTacToe() {
             gameBoard = ['', '', '', '', '', '', '', '', ''];
             gameActive = true;
@@ -665,18 +450,14 @@
             timer = 10;
             document.getElementById('timer').textContent = "Time left: 10";
             document.getElementById('challenge-result').textContent = "Win in 10 seconds to continue!";
-            
-            document.querySelectorAll('.cell').forEach(cell => {
-                cell.textContent = '';
-            });
+            document.querySelectorAll('.cell').forEach(cell => cell.textContent = '');
         }
-        
+
         function startTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timer--;
                 document.getElementById('timer').textContent = `Time left: ${timer}`;
-                
                 if (timer <= 0) {
                     clearInterval(timerInterval);
                     document.getElementById('challenge-result').textContent = "Time's up! Game over.";
@@ -689,13 +470,11 @@
                 }
             }, 1000);
         }
-        
+
         function handleCellClick(e) {
             if (!gameActive || currentPlayer !== 'X') return;
-            
             const cell = e.target;
             const index = cell.getAttribute('data-index');
-            
             if (gameBoard[index] !== '') return;
             
             gameBoard[index] = currentPlayer;
@@ -728,7 +507,6 @@
             setTimeout(() => {
                 if (gameActive) {
                     makeAIMove();
-                    
                     if (checkWinner('O')) {
                         clearInterval(timerInterval);
                         document.getElementById('challenge-result').textContent = `Computer won! Game over.`;
@@ -756,7 +534,7 @@
                 }
             }, 500);
         }
-        
+
         function makeAIMove() {
             const availableSpots = gameBoard.map((spot, index) => spot === '' ? index : null).filter(val => val !== null);
             
@@ -805,7 +583,7 @@
             gameBoard[randomSpot] = 'O';
             document.querySelector(`.cell[data-index="${randomSpot}"]`).textContent = 'O';
         }
-        
+
         function checkWinner(player) {
             const winPatterns = [
                 [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -821,11 +599,11 @@
             }
             return false;
         }
-        
+
         function isBoardFull() {
             return gameBoard.every(cell => cell !== '');
         }
-        
+
         /* ===== WORD GUESS GAME ===== */
         const wordList = [
             { word: "apple", clue: "A common fruit that grows on trees" },
@@ -844,7 +622,7 @@
         let hiddenWord = [];
         let wordTimer = 10;
         let wordTimerInterval;
-        
+
         function startWordGuess() {
             resetWordGuess();
             startWordTimer();
@@ -852,7 +630,7 @@
                 document.getElementById('word-input').focus();
             }
         }
-        
+
         function resetWordGuess() {
             const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
             currentWord = randomWord.word.toLowerCase();
@@ -864,13 +642,12 @@
             document.getElementById('word-display').textContent = hiddenWord.join(' ');
             document.getElementById('word-input').value = '';
         }
-        
+
         function startWordTimer() {
             clearInterval(wordTimerInterval);
             wordTimerInterval = setInterval(() => {
                 wordTimer--;
                 document.getElementById('word-timer').textContent = `Time left: ${wordTimer}`;
-                
                 if (wordTimer <= 0) {
                     clearInterval(wordTimerInterval);
                     document.getElementById('challenge-result-word').textContent = "Time's up! Game over.";
@@ -882,10 +659,9 @@
                 }
             }, 1000);
         }
-        
+
         function checkWordGuess() {
             const guess = document.getElementById('word-input').value.toLowerCase();
-            
             if (guess === currentWord) {
                 clearInterval(wordTimerInterval);
                 document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
@@ -898,7 +674,7 @@
                 document.getElementById('word-input').value = '';
             }
         }
-        
+
         function continueAfterChallenge() {
             isShowingChallenge = false;
             currentChallenge = null;
@@ -906,27 +682,29 @@
             lastObstacleTime = Date.now();
             gameLoop();
         }
-        
+
         // Event listeners
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                if (!gameIsRunning && gameOverScreen.style.display !== 'block') {
+                if (!gameStarted) {
                     startGame();
                 } else {
                     switchFloor();
                 }
             }
         });
-        
-        gameContainer.addEventListener('click', () => {
-            if (gameIsRunning) {
-                switchFloor();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
+
+        gameContainer.addEventListener('click', (e) => {
+            if (e.target.id !== 'restart-btn') {
+                if (!gameStarted) {
+                    startGame();
+                } else if (gameIsRunning) {
+                    switchFloor();
+                }
             }
         });
-        
+
         restartBtn.addEventListener('click', startGame);
         closeChallenge.addEventListener('click', () => {
             clearInterval(timerInterval);
@@ -935,29 +713,25 @@
             gameOverScreen.style.display = 'block';
             isShowingChallenge = false;
         });
-        
-        // Tic Tac Toe event listeners
+
         document.getElementById('board').addEventListener('click', handleCellClick);
-        
-        // Word Guess event listeners
         document.getElementById('submit-guess').addEventListener('click', checkWordGuess);
         document.getElementById('word-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                checkWordGuess();
-            }
+            if (e.key === 'Enter') checkWordGuess();
         });
-        
-        // Handle window resize and orientation change
+
         window.addEventListener('resize', initGameSize);
         window.addEventListener('orientationchange', initGameSize);
-        
+
         // Initialize
         initGameSize();
         
-        // Start music on first user interaction
+        // Start music on first interaction
         document.addEventListener('click', function firstInteraction() {
-            playRandomMusic();
-            document.removeEventListener('click', firstInteraction);
+            if (!gameStarted) {
+                playRandomMusic();
+                document.removeEventListener('click', firstInteraction);
+            }
         }, { once: true });
     </script>
 </body>
