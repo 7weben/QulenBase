@@ -264,6 +264,11 @@
             color: #aaa;
             font-size: 14px;
         }
+        
+        /* Hidden audio elements */
+        .audio-element {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -321,6 +326,16 @@
         </div>
     </div>
 
+    <!-- Audio Elements -->
+    <audio id="bgMusic1" class="audio-element" loop></audio>
+    <audio id="bgMusic2" class="audio-element" loop></audio>
+    <audio id="bgMusic3" class="audio-element" loop></audio>
+    <audio id="jumpSound" class="audio-element"></audio>
+    <audio id="gameOverSound" class="audio-element"></audio>
+    <audio id="scoreSound" class="audio-element"></audio>
+    <audio id="challengeSound" class="audio-element"></audio>
+    <audio id="winSound" class="audio-element"></audio>
+
     <script>
         // Game elements
         const player = document.getElementById('player');
@@ -330,6 +345,61 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        
+        // Audio elements
+        const bgMusic1 = document.getElementById('bgMusic1');
+        const bgMusic2 = document.getElementById('bgMusic2');
+        const bgMusic3 = document.getElementById('bgMusic3');
+        const jumpSound = document.getElementById('jumpSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+        const scoreSound = document.getElementById('scoreSound');
+        const challengeSound = document.getElementById('challengeSound');
+        const winSound = document.getElementById('winSound');
+        
+        // Load audio files (replace with your own audio files)
+        function loadAudioFiles() {
+            // Background music tracks
+            bgMusic1.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3';
+            bgMusic2.src = 'https://assets.mixkit.co/music/preview/mixkit-racing-retro-game-tune-226.mp3';
+            bgMusic3.src = 'https://assets.mixkit.co/music/preview/mixkit-arcade-retro-game-over-213.mp3';
+            
+            // Sound effects
+            jumpSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3';
+            gameOverSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3';
+            scoreSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3';
+            challengeSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3';
+            winSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3';
+            
+            // Enable autoplay by playing/pausing when user interacts with the page
+            document.addEventListener('click', function initAudio() {
+                bgMusic1.volume = 0.5;
+                bgMusic2.volume = 0.5;
+                bgMusic3.volume = 0.5;
+                jumpSound.volume = 0.7;
+                gameOverSound.volume = 0.7;
+                scoreSound.volume = 0.7;
+                challengeSound.volume = 0.7;
+                winSound.volume = 0.7;
+                
+                // Remove this event listener after it's run once
+                document.removeEventListener('click', initAudio);
+            }, { once: true });
+        }
+        
+        // Play random background music
+        function playBackgroundMusic() {
+            const musicTracks = [bgMusic1, bgMusic2, bgMusic3];
+            const randomTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)];
+            
+            // Stop all music tracks first
+            musicTracks.forEach(track => {
+                track.pause();
+                track.currentTime = 0;
+            });
+            
+            // Play the selected track
+            randomTrack.play().catch(e => console.log("Audio play failed:", e));
+        }
         
         // Challenge elements
         const challengeContainer = document.getElementById('challenge-container');
@@ -427,6 +497,9 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
+            
+            // Start background music
+            playBackgroundMusic();
         }
         
         // Calculate current speed
@@ -561,6 +634,10 @@
             
             isOnTopFloor = !isOnTopFloor;
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
+            
+            // Play jump sound
+            jumpSound.currentTime = 0;
+            jumpSound.play().catch(e => console.log("Jump sound failed:", e));
         }
         
         // Increase score
@@ -568,6 +645,12 @@
             score++;
             scoreDisplay.textContent = score;
             currentSpeedMultiplier = 1 + (score * 0.02);
+            
+            // Play score sound every 10 points
+            if (score % 10 === 0) {
+                scoreSound.currentTime = 0;
+                scoreSound.play().catch(e => console.log("Score sound failed:", e));
+            }
         }
         
         // End the game
@@ -577,6 +660,10 @@
             
             finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
+            
+            // Play game over sound
+            gameOverSound.currentTime = 0;
+            gameOverSound.play().catch(e => console.log("Game over sound failed:", e));
         }
         
         // Show random challenge
@@ -584,6 +671,10 @@
             isShowingChallenge = true;
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'flex';
+            
+            // Play challenge sound
+            challengeSound.currentTime = 0;
+            challengeSound.play().catch(e => console.log("Challenge sound failed:", e));
             
             if (Math.random() > 0.5) {
                 currentChallenge = 'tic-tac-toe';
@@ -657,6 +748,11 @@
                 clearInterval(timerInterval);
                 document.getElementById('challenge-result').textContent = `You won! Continuing your run...`;
                 gameActive = false;
+                
+                // Play win sound
+                winSound.currentTime = 0;
+                winSound.play().catch(e => console.log("Win sound failed:", e));
+                
                 setTimeout(() => {
                     challengeContainer.style.display = 'none';
                     continueAfterChallenge();
@@ -841,6 +937,11 @@
             if (guess === currentWord) {
                 clearInterval(wordTimerInterval);
                 document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
+                
+                // Play win sound
+                winSound.currentTime = 0;
+                winSound.play().catch(e => console.log("Win sound failed:", e));
+                
                 setTimeout(() => {
                     challengeContainer.style.display = 'none';
                     continueAfterChallenge();
@@ -903,8 +1004,11 @@
         window.addEventListener('resize', initGameSize);
         window.addEventListener('orientationchange', initGameSize);
         
+        // Load audio files when page loads
+        window.addEventListener('DOMContentLoaded', loadAudioFiles);
+        
         // Initialize
         initGameSize();
     </script>
 </body>
-</html>
+    </html>
