@@ -264,22 +264,6 @@
             color: #aaa;
             font-size: 14px;
         }
-        
-        #music-control {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 100;
-            background: rgba(0,0,0,0.5);
-            padding: 5px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        
-        #music-control img {
-            width: 30px;
-            height: 30px;
-        }
     </style>
 </head>
 <body>
@@ -294,9 +278,6 @@
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
                 <button id="restart-btn">Play Again</button>
-            </div>
-            <div id="music-control">
-                <img src="https://cdn-icons-png.flaticon.com/512/3669/3669483.png" alt="Music Control">
             </div>
         </div>
     </div>
@@ -363,7 +344,6 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
-        const musicControl = document.getElementById('music-control');
         
         // Audio elements
         const audioElements = [
@@ -391,7 +371,6 @@
         let currentBg = 'NBG.png';
         let bgChangedAtScore = 0;
         let currentMusicIndex = 0;
-        let isMusicPlaying = true;
         
         // Initialize game dimensions
         function initGameSize() {
@@ -442,22 +421,16 @@
             
             currentMusicIndex = newIndex;
             
-            // Play the selected track if music is enabled
-            if (isMusicPlaying) {
-                audioElements[currentMusicIndex].volume = 0.3;
-                audioElements[currentMusicIndex].play().catch(e => console.log("Audio play failed:", e));
-            }
-        }
-        
-        // Toggle music on/off
-        function toggleMusic() {
-            isMusicPlaying = !isMusicPlaying;
-            if (isMusicPlaying) {
-                audioElements[currentMusicIndex].play();
-                musicControl.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/3669/3669483.png" alt="Music On">';
-            } else {
-                audioElements[currentMusicIndex].pause();
-                musicControl.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/3669/3669499.png" alt="Music Off">';
+            // Play the selected track
+            audioElements[currentMusicIndex].volume = 0.3;
+            const playPromise = audioElements[currentMusicIndex].play();
+            
+            // Handle autoplay restrictions
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Auto-play was prevented, show a play button
+                    console.log("Auto-play prevented, user interaction required");
+                });
             }
         }
         
@@ -963,9 +936,6 @@
             isShowingChallenge = false;
         });
         
-        // Music control
-        musicControl.addEventListener('click', toggleMusic);
-        
         // Tic Tac Toe event listeners
         document.getElementById('board').addEventListener('click', handleCellClick);
         
@@ -983,6 +953,12 @@
         
         // Initialize
         initGameSize();
+        
+        // Start music on first user interaction
+        document.addEventListener('click', function firstInteraction() {
+            playRandomMusic();
+            document.removeEventListener('click', firstInteraction);
+        }, { once: true });
     </script>
 </body>
 </html>
