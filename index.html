@@ -264,6 +264,22 @@
             color: #aaa;
             font-size: 14px;
         }
+        
+        #music-control {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        #music-control img {
+            width: 30px;
+            height: 30px;
+        }
     </style>
 </head>
 <body>
@@ -279,8 +295,25 @@
                 <p>Score: <span id="final-score">0</span></p>
                 <button id="restart-btn">Play Again</button>
             </div>
+            <div id="music-control">
+                <img src="https://cdn-icons-png.flaticon.com/512/3669/3669483.png" alt="Music Control">
+            </div>
         </div>
     </div>
+
+    <!-- Hidden audio elements -->
+    <audio id="bg-music-1" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bg-music-2" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bg-music-3" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-racing-intense-energy-125.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bg-music-4" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-happy-times-1580.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- Challenge Popup -->
     <div id="challenge-container">
@@ -330,13 +363,15 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        const musicControl = document.getElementById('music-control');
         
-        // Challenge elements
-        const challengeContainer = document.getElementById('challenge-container');
-        const challengePopup = document.getElementById('challenge-popup');
-        const closeChallenge = document.getElementById('close-challenge');
-        const ticTacToeGame = document.getElementById('tic-tac-toe');
-        const wordGuessGame = document.getElementById('word-guess');
+        // Audio elements
+        const audioElements = [
+            document.getElementById('bg-music-1'),
+            document.getElementById('bg-music-2'),
+            document.getElementById('bg-music-3'),
+            document.getElementById('bg-music-4')
+        ];
         
         // Game variables
         let gameHeight, gameWidth;
@@ -355,6 +390,8 @@
         let patternBroken = false;
         let currentBg = 'NBG.png';
         let bgChangedAtScore = 0;
+        let currentMusicIndex = 0;
+        let isMusicPlaying = true;
         
         // Initialize game dimensions
         function initGameSize() {
@@ -389,6 +426,41 @@
             };
         }
         
+        // Play random music track
+        function playRandomMusic() {
+            // Stop all audio tracks first
+            audioElements.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+            
+            // Select a new random track (different from current one)
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * audioElements.length);
+            } while (newIndex === currentMusicIndex && audioElements.length > 1);
+            
+            currentMusicIndex = newIndex;
+            
+            // Play the selected track if music is enabled
+            if (isMusicPlaying) {
+                audioElements[currentMusicIndex].volume = 0.3;
+                audioElements[currentMusicIndex].play().catch(e => console.log("Audio play failed:", e));
+            }
+        }
+        
+        // Toggle music on/off
+        function toggleMusic() {
+            isMusicPlaying = !isMusicPlaying;
+            if (isMusicPlaying) {
+                audioElements[currentMusicIndex].play();
+                musicControl.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/3669/3669483.png" alt="Music On">';
+            } else {
+                audioElements[currentMusicIndex].pause();
+                musicControl.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/3669/3669499.png" alt="Music Off">';
+            }
+        }
+        
         // Check if background should change
         function checkBackgroundChange() {
             if (score >= bgChangedAtScore + 100) {
@@ -410,6 +482,9 @@
             bgChangedAtScore = 0;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
+            
+            // Play new random music
+            playRandomMusic();
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -887,6 +962,9 @@
             gameOverScreen.style.display = 'block';
             isShowingChallenge = false;
         });
+        
+        // Music control
+        musicControl.addEventListener('click', toggleMusic);
         
         // Tic Tac Toe event listeners
         document.getElementById('board').addEventListener('click', handleCellClick);
