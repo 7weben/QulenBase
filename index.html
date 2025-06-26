@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Precision Dash</title>
+    <title>Precision Dash with Sound</title>
     <!-- Favicon Links -->
     <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
     <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
@@ -16,12 +16,15 @@
         body {
             margin: 0;
             padding: 0;
-            background: #111;
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
             height: 100vh;
             width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         #game-wrapper {
@@ -30,14 +33,45 @@
             align-items: center;
             height: 100vh;
             width: 100vw;
+            position: relative;
+        }
+        
+        .sound-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .sound-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #00FF00;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .sound-btn:hover {
+            background: rgba(0, 100, 0, 0.7);
+            transform: scale(1.1);
         }
         
         #game-container {
             position: relative;
             background: #000;
             border: 3px solid #444;
-            border-radius: 5px;
+            border-radius: 10px;
             overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
         }
 
         /* Mobile (3:4 aspect ratio) */
@@ -73,11 +107,12 @@
             height: 45px;
             background: transparent;
             z-index: 10;
-            background-image: url('https://iili.io/J9xK4kX.gif');
+            background-image: url('https://i.ibb.co/0jQbH2q/player.gif');
             background-size: contain;
             background-repeat: no-repeat;
             transform: scaleX(-1);
             transition: top 0.15s ease;
+            filter: drop-shadow(0 0 5px #00FF00);
         }
         
         .obstacle {
@@ -132,23 +167,40 @@
             transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
             display: none;
             z-index: 30;
             width: 80%;
             max-width: 400px;
+            border: 2px solid #00FF00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
         }
         
         #restart-btn {
-            background-color: #00FF00;
+            background: linear-gradient(to bottom, #00FF00, #008800);
             border: none;
-            padding: 10px 20px;
+            padding: 12px 30px;
             font-size: 18px;
-            border-radius: 5px;
+            border-radius: 30px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        #restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        
+        #restart-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
         /* Challenge Popup Styles */
@@ -167,47 +219,77 @@
         
         #challenge-popup {
             background: #222;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 25px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 400px;
+            max-width: 450px;
             position: relative;
+            border: 2px solid #FFD700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
         }
         
         #close-challenge {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             background: transparent;
             border: none;
             color: white;
-            font-size: 20px;
+            font-size: 24px;
             cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #close-challenge:hover {
+            background: rgba(255,0,0,0.3);
         }
         
         #challenge-popup h2 {
-            color: white;
+            color: #FFD700;
             margin-top: 0;
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
         
         /* Tic Tac Toe Styles */
         .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            margin: 15px auto;
-            width: 150px;
+            gap: 8px;
+            margin: 20px auto;
+            width: 200px;
         }
         
         .cell {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: #333;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 32px;
             cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+        
+        .cell:hover {
+            background: #444;
+        }
+        
+        .cell.x {
+            color: #FF5555;
+        }
+        
+        .cell.o {
+            color: #55AAFF;
         }
         
         /* Word Guess Styles */
@@ -218,88 +300,114 @@
         #word-clue {
             color: #FFD700;
             font-size: 18px;
-            margin: 10px 0;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
         }
         
         #word-display {
-            font-size: 24px;
-            letter-spacing: 5px;
-            margin: 15px 0;
+            font-size: 32px;
+            letter-spacing: 8px;
+            margin: 25px 0;
             color: white;
+            text-align: center;
+            font-weight: bold;
         }
         
         #word-input {
-            padding: 8px;
-            font-size: 16px;
+            padding: 12px;
+            font-size: 18px;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 2px solid #00FF00;
+            background: #333;
+            color: white;
+            text-align: center;
         }
         
         #submit-guess {
-            background: #00FF00;
+            background: linear-gradient(to bottom, #00FF00, #008800);
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            padding: 10px 25px;
+            font-size: 18px;
+            border-radius: 30px;
             cursor: pointer;
+            color: white;
+            font-weight: bold;
+            display: block;
+            margin: 0 auto;
+            width: 60%;
+            max-width: 200px;
+            transition: all 0.2s ease;
+        }
+        
+        #submit-guess:hover {
+            transform: scale(1.05);
         }
         
         #challenge-result {
             color: white;
-            margin: 10px 0;
-            min-height: 20px;
+            margin: 15px 0;
+            min-height: 25px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: bold;
         }
         
-        #timer {
+        #timer, #word-timer {
             color: #FF5555;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 15px 0;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
         }
         
         #ad-space {
             background: #333;
-            padding: 10px;
-            margin-top: 20px;
+            padding: 15px;
+            margin-top: 25px;
             text-align: center;
             color: #aaa;
             font-size: 14px;
+            border-radius: 8px;
         }
         
-        /* Audio elements */
-        .audio-element {
+        .title {
             position: absolute;
-            width: 0;
-            height: 0;
-            opacity: 0;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00FF00;
+            font-size: 36px;
+            text-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            z-index: 10;
+            font-weight: bold;
         }
         
-        #audio-init-btn {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: white;
-            font-size: 24px;
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #aaa;
+            font-size: 16px;
             text-align: center;
-            cursor: pointer;
+            width: 100%;
+            max-width: 500px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <!-- Audio initialization overlay -->
-    <div id="audio-init-btn">
-        <div>
-            <h2>Precision Dash</h2>
-            <p>Click anywhere to start the game</p>
-        </div>
+    <div class="title">PRECISION DASH</div>
+    
+    <div class="sound-controls">
+        <div class="sound-btn" id="music-toggle" title="Toggle Music">♪</div>
+        <div class="sound-btn" id="sfx-toggle" title="Toggle Sound Effects">🔊</div>
     </div>
-
+    
     <div id="game-wrapper">
         <div id="game-container">
             <div id="game-bg"></div>
@@ -354,15 +462,30 @@
         </div>
     </div>
 
-    <!-- Audio Elements -->
-    <audio id="bgMusic1" class="audio-element" loop></audio>
-    <audio id="bgMusic2" class="audio-element" loop></audio>
-    <audio id="bgMusic3" class="audio-element" loop></audio>
-    <audio id="jumpSound" class="audio-element"></audio>
-    <audio id="gameOverSound" class="audio-element"></audio>
-    <audio id="scoreSound" class="audio-element"></audio>
-    <audio id="challengeSound" class="audio-element"></audio>
-    <audio id="winSound" class="audio-element"></audio>
+    <!-- Audio elements -->
+    <audio id="bg-music" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="jump-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="score-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="gameover-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-losing-bleeps-2026.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="challenge-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-magic-sparkles-sound-300.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="success-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="fail-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-sad-game-over-trombone-471.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="instructions">Press SPACE or TAP to jump between platforms | Score 100+ to unlock challenges</div>
 
     <script>
         // Game elements
@@ -373,17 +496,35 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
-        const audioInitBtn = document.getElementById('audio-init-btn');
         
-        // Audio elements
-        const bgMusic1 = document.getElementById('bgMusic1');
-        const bgMusic2 = document.getElementById('bgMusic2');
-        const bgMusic3 = document.getElementById('bgMusic3');
-        const jumpSound = document.getElementById('jumpSound');
-        const gameOverSound = document.getElementById('gameOverSound');
-        const scoreSound = document.getElementById('scoreSound');
-        const challengeSound = document.getElementById('challengeSound');
-        const winSound = document.getElementById('winSound');
+        // Challenge elements
+        const challengeContainer = document.getElementById('challenge-container');
+        const challengePopup = document.getElementById('challenge-popup');
+        const closeChallenge = document.getElementById('close-challenge');
+        const ticTacToeGame = document.getElementById('tic-tac-toe');
+        const wordGuessGame = document.getElementById('word-guess');
+        
+        // Sound elements
+        const bgMusic = document.getElementById('bg-music');
+        const jumpSound = document.getElementById('jump-sound');
+        const scoreSound = document.getElementById('score-sound');
+        const gameoverSound = document.getElementById('gameover-sound');
+        const challengeSound = document.getElementById('challenge-sound');
+        const successSound = document.getElementById('success-sound');
+        const failSound = document.getElementById('fail-sound');
+        const musicToggle = document.getElementById('music-toggle');
+        const sfxToggle = document.getElementById('sfx-toggle');
+        
+        // Sound settings
+        let musicEnabled = true;
+        let sfxEnabled = true;
+        bgMusic.volume = 0.3;
+        jumpSound.volume = 0.6;
+        scoreSound.volume = 0.4;
+        gameoverSound.volume = 0.5;
+        challengeSound.volume = 0.6;
+        successSound.volume = 0.6;
+        failSound.volume = 0.6;
         
         // Game variables
         let gameHeight, gameWidth;
@@ -400,68 +541,8 @@
         let currentChallenge = null;
         let lastObstaclePosition = 'bottom';
         let patternBroken = false;
-        let currentBg = 'https://iili.io/J9xJ3hx.png';
+        let currentBg = 'https://i.ibb.co/vY5nQyJ/NBG.png';
         let bgChangedAtScore = 0;
-        let audioInitialized = false;
-        
-        // Load audio files
-        function loadAudioFiles() {
-            // Background music tracks
-            bgMusic1.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3';
-            bgMusic2.src = 'https://assets.mixkit.co/music/preview/mixkit-racing-retro-game-tune-226.mp3';
-            bgMusic3.src = 'https://assets.mixkit.co/music/preview/mixkit-arcade-retro-game-over-213.mp3';
-            
-            // Sound effects
-            jumpSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3';
-            gameOverSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3';
-            scoreSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3';
-            challengeSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3';
-            winSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3';
-            
-            // Set volumes
-            bgMusic1.volume = 0.5;
-            bgMusic2.volume = 0.5;
-            bgMusic3.volume = 0.5;
-            jumpSound.volume = 0.7;
-            gameOverSound.volume = 0.7;
-            scoreSound.volume = 0.7;
-            challengeSound.volume = 0.7;
-            winSound.volume = 0.7;
-        }
-        
-        // Initialize audio - must be called after user interaction
-        function initAudio() {
-            // Try to play a sound to unlock audio
-            jumpSound.play().then(() => {
-                jumpSound.pause();
-                jumpSound.currentTime = 0;
-                audioInitialized = true;
-                audioInitBtn.style.display = 'none';
-                startGame();
-            }).catch(e => {
-                console.error("Audio initialization failed:", e);
-                // If audio fails, just start the game without sound
-                audioInitBtn.style.display = 'none';
-                startGame();
-            });
-        }
-        
-        // Play random background music
-        function playBackgroundMusic() {
-            if (!audioInitialized) return;
-            
-            const musicTracks = [bgMusic1, bgMusic2, bgMusic3];
-            const randomTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)];
-            
-            // Stop all music tracks first
-            musicTracks.forEach(track => {
-                track.pause();
-                track.currentTime = 0;
-            });
-            
-            // Play the selected track
-            randomTrack.play().catch(e => console.log("Background music play failed:", e));
-        }
         
         // Initialize game dimensions
         function initGameSize() {
@@ -478,7 +559,9 @@
         
         // Change background with fade effect
         function changeBackground() {
-            const nextBg = currentBg === 'https://iili.io/J9xJ3hx.png' ? 'https://iili.io/J9xJQYj.png' : 'https://iili.io/J9xJ3hx.png';
+            const nextBg = currentBg === 'https://i.ibb.co/vY5nQyJ/NBG.png' 
+                ? 'https://i.ibb.co/Js5Dq2p/DBG.png' 
+                : 'https://i.ibb.co/vY5nQyJ/NBG.png';
             
             // Create temporary element for preloading
             const tempImg = new Image();
@@ -513,9 +596,9 @@
             currentChallenge = null;
             lastObstaclePosition = 'bottom';
             patternBroken = false;
-            currentBg = 'https://iili.io/J9xJ3hx.png';
+            currentBg = 'https://i.ibb.co/vY5nQyJ/NBG.png';
             bgChangedAtScore = 0;
-            gameBg.style.backgroundImage = "url('https://iili.io/J9xJ3hx.png')";
+            gameBg.style.backgroundImage = "url('https://i.ibb.co/vY5nQyJ/NBG.png')";
             gameBg.style.opacity = 1;
             
             // Clear all obstacles
@@ -535,9 +618,10 @@
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
             
-            // Start background music if audio is initialized
-            if (audioInitialized) {
-                playBackgroundMusic();
+            // Play background music
+            if (musicEnabled) {
+                bgMusic.currentTime = 0;
+                bgMusic.play().catch(e => console.log("Autoplay prevented:", e));
             }
         }
         
@@ -675,9 +759,9 @@
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
             
             // Play jump sound
-            if (audioInitialized) {
+            if (sfxEnabled) {
                 jumpSound.currentTime = 0;
-                jumpSound.play().catch(e => console.log("Jump sound failed:", e));
+                jumpSound.play().catch(e => console.log("Sound error:", e));
             }
         }
         
@@ -688,9 +772,9 @@
             currentSpeedMultiplier = 1 + (score * 0.02);
             
             // Play score sound every 10 points
-            if (score % 10 === 0 && audioInitialized) {
+            if (sfxEnabled && score % 10 === 0) {
                 scoreSound.currentTime = 0;
-                scoreSound.play().catch(e => console.log("Score sound failed:", e));
+                scoreSound.play().catch(e => console.log("Sound error:", e));
             }
         }
         
@@ -703,10 +787,13 @@
             gameOverScreen.style.display = 'block';
             
             // Play game over sound
-            if (audioInitialized) {
-                gameOverSound.currentTime = 0;
-                gameOverSound.play().catch(e => console.log("Game over sound failed:", e));
+            if (sfxEnabled) {
+                gameoverSound.currentTime = 0;
+                gameoverSound.play().catch(e => console.log("Sound error:", e));
             }
+            
+            // Pause background music
+            bgMusic.pause();
         }
         
         // Show random challenge
@@ -716,9 +803,9 @@
             challengeContainer.style.display = 'flex';
             
             // Play challenge sound
-            if (audioInitialized) {
+            if (sfxEnabled) {
                 challengeSound.currentTime = 0;
-                challengeSound.play().catch(e => console.log("Challenge sound failed:", e));
+                challengeSound.play().catch(e => console.log("Sound error:", e));
             }
             
             if (Math.random() > 0.5) {
@@ -756,6 +843,7 @@
             
             document.querySelectorAll('.cell').forEach(cell => {
                 cell.textContent = '';
+                cell.classList.remove('x', 'o');
             });
         }
         
@@ -769,6 +857,13 @@
                     clearInterval(timerInterval);
                     document.getElementById('challenge-result').textContent = "Time's up! Game over.";
                     gameActive = false;
+                    
+                    // Play fail sound
+                    if (sfxEnabled) {
+                        failSound.currentTime = 0;
+                        failSound.play().catch(e => console.log("Sound error:", e));
+                    }
+                    
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
                         gameOverScreen.style.display = 'block';
@@ -788,16 +883,17 @@
             
             gameBoard[index] = currentPlayer;
             cell.textContent = currentPlayer;
+            cell.classList.add('x');
             
             if (checkWinner('X')) {
                 clearInterval(timerInterval);
                 document.getElementById('challenge-result').textContent = `You won! Continuing your run...`;
                 gameActive = false;
                 
-                // Play win sound
-                if (audioInitialized) {
-                    winSound.currentTime = 0;
-                    winSound.play().catch(e => console.log("Win sound failed:", e));
+                // Play success sound
+                if (sfxEnabled) {
+                    successSound.currentTime = 0;
+                    successSound.play().catch(e => console.log("Sound error:", e));
                 }
                 
                 setTimeout(() => {
@@ -828,6 +924,13 @@
                         clearInterval(timerInterval);
                         document.getElementById('challenge-result').textContent = `Computer won! Game over.`;
                         gameActive = false;
+                        
+                        // Play fail sound
+                        if (sfxEnabled) {
+                            failSound.currentTime = 0;
+                            failSound.play().catch(e => console.log("Sound error:", e));
+                        }
+                        
                         setTimeout(() => {
                             challengeContainer.style.display = 'none';
                             gameOverScreen.style.display = 'block';
@@ -861,6 +964,7 @@
                 gameBoard[index] = 'O';
                 if (checkWinner('O')) {
                     document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    document.querySelector(`.cell[data-index="${index}"]`).classList.add('o');
                     return;
                 }
                 gameBoard[index] = '';
@@ -873,6 +977,7 @@
                 if (checkWinner('X')) {
                     gameBoard[index] = 'O';
                     document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    document.querySelector(`.cell[data-index="${index}"]`).classList.add('o');
                     return;
                 }
                 gameBoard[index] = '';
@@ -882,6 +987,7 @@
             if (gameBoard[4] === '') {
                 gameBoard[4] = 'O';
                 document.querySelector('.cell[data-index="4"]').textContent = 'O';
+                document.querySelector('.cell[data-index="4"]').classList.add('o');
                 return;
             }
             
@@ -892,6 +998,7 @@
                 const randomCorner = availableCorners[Math.floor(Math.random() * availableCorners.length)];
                 gameBoard[randomCorner] = 'O';
                 document.querySelector(`.cell[data-index="${randomCorner}"]`).textContent = 'O';
+                document.querySelector(`.cell[data-index="${randomCorner}"]`).classList.add('o');
                 return;
             }
             
@@ -899,6 +1006,7 @@
             const randomSpot = availableSpots[Math.floor(Math.random() * availableSpots.length)];
             gameBoard[randomSpot] = 'O';
             document.querySelector(`.cell[data-index="${randomSpot}"]`).textContent = 'O';
+            document.querySelector(`.cell[data-index="${randomSpot}"]`).classList.add('o');
         }
         
         function checkWinner(player) {
@@ -969,6 +1077,13 @@
                 if (wordTimer <= 0) {
                     clearInterval(wordTimerInterval);
                     document.getElementById('challenge-result-word').textContent = "Time's up! Game over.";
+                    
+                    // Play fail sound
+                    if (sfxEnabled) {
+                        failSound.currentTime = 0;
+                        failSound.play().catch(e => console.log("Sound error:", e));
+                    }
+                    
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
                         gameOverScreen.style.display = 'block';
@@ -985,10 +1100,10 @@
                 clearInterval(wordTimerInterval);
                 document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
                 
-                // Play win sound
-                if (audioInitialized) {
-                    winSound.currentTime = 0;
-                    winSound.play().catch(e => console.log("Win sound failed:", e));
+                // Play success sound
+                if (sfxEnabled) {
+                    successSound.currentTime = 0;
+                    successSound.play().catch(e => console.log("Sound error:", e));
                 }
                 
                 setTimeout(() => {
@@ -1006,8 +1121,35 @@
             currentChallenge = null;
             gameIsRunning = true;
             lastObstacleTime = Date.now();
+            
+            // Resume background music
+            if (musicEnabled) {
+                bgMusic.play().catch(e => console.log("Autoplay prevented:", e));
+            }
+            
             gameLoop();
         }
+        
+        // Toggle music
+        musicToggle.addEventListener('click', () => {
+            musicEnabled = !musicEnabled;
+            musicToggle.style.backgroundColor = musicEnabled ? 'rgba(0, 100, 0, 0.7)' : 'rgba(100, 0, 0, 0.7)';
+            musicToggle.style.borderColor = musicEnabled ? '#00FF00' : '#FF0000';
+            
+            if (musicEnabled) {
+                bgMusic.play().catch(e => console.log("Autoplay prevented:", e));
+            } else {
+                bgMusic.pause();
+            }
+        });
+        
+        // Toggle sound effects
+        sfxToggle.addEventListener('click', () => {
+            sfxEnabled = !sfxEnabled;
+            sfxToggle.style.backgroundColor = sfxEnabled ? 'rgba(0, 100, 0, 0.7)' : 'rgba(100, 0, 0, 0.7)';
+            sfxToggle.style.borderColor = sfxEnabled ? '#00FF00' : '#FF0000';
+            sfxToggle.textContent = sfxEnabled ? '🔊' : '🔇';
+        });
         
         // Event listeners
         document.addEventListener('keydown', (e) => {
@@ -1038,9 +1180,6 @@
             isShowingChallenge = false;
         });
         
-        // Audio initialization button
-        audioInitBtn.addEventListener('click', initAudio);
-        
         // Tic Tac Toe event listeners
         document.getElementById('board').addEventListener('click', handleCellClick);
         
@@ -1055,9 +1194,6 @@
         // Handle window resize and orientation change
         window.addEventListener('resize', initGameSize);
         window.addEventListener('orientationchange', initGameSize);
-        
-        // Load audio files when page loads
-        window.addEventListener('DOMContentLoaded', loadAudioFiles);
         
         // Initialize
         initGameSize();
