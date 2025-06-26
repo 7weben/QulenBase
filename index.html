@@ -38,11 +38,24 @@
             border: 3px solid #444;
             border-radius: 5px;
             overflow: hidden;
-            /* 3:2 Aspect Ratio */
-            width: 90vmin;
-            height: 60vmin;
-            max-width: 90vw;
-            max-height: 90vh;
+        }
+
+        /* Mobile (3:4 aspect ratio) */
+        @media (max-width: 768px), (orientation: portrait) {
+            #game-container {
+                width: 90vw;
+                height: calc(90vw * 1.333); /* 3:4 ratio */
+                max-height: 90vh;
+            }
+        }
+
+        /* Desktop (3:2 aspect ratio) */
+        @media (min-width: 769px), (orientation: landscape) {
+            #game-container {
+                height: 80vh;
+                width: calc(80vh * 1.5); /* 3:2 ratio */
+                max-width: 90vw;
+            }
         }
         
         #game-bg {
@@ -554,7 +567,7 @@
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            currentSpeedMultiplier = 1 + (score * 0.02); // Changed from 0.011 to 0.02
+            currentSpeedMultiplier = 1 + (score * 0.02);
         }
         
         // End the game
@@ -886,7 +899,7 @@
             }
         });
         
-        // Handle window resize
+        // Handle window resize and orientation change
         window.addEventListener('resize', initGameSize);
         window.addEventListener('orientationchange', initGameSize);
         
