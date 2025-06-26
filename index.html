@@ -30,32 +30,28 @@
             align-items: center;
             height: 100vh;
             width: 100vw;
+            position: relative;
+        }
+        
+        #game-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 0.5s ease;
         }
         
         #game-container {
             position: relative;
-            background: #000;
+            background: rgba(0, 0, 0, 0.3);
             border: 3px solid #444;
             border-radius: 5px;
             overflow: hidden;
-        }
-
-        /* Mobile (2:3 aspect ratio) */
-        @media (max-width: 768px), (orientation: portrait) {
-            #game-container {
-                width: 90vw;
-                height: calc(90vw * 1.5);
-                max-height: 90vh;
-            }
-        }
-
-        /* Desktop (3:2 aspect ratio) */
-        @media (min-width: 769px), (orientation: landscape) {
-            #game-container {
-                height: 80vh;
-                width: calc(80vh * 1.5);
-                max-width: 90vw;
-            }
+            height: 80vh;
+            width: calc(80vh * 1.5);
+            max-width: 90vw;
+            max-height: 90vh;
         }
         
         #player {
@@ -67,7 +63,7 @@
             background-image: url('UQH.gif');
             background-size: contain;
             background-repeat: no-repeat;
-            transform: scaleX(-1); /* Flip horizontally */
+            transform: scaleX(-1);
             transition: top 0.15s ease;
         }
         
@@ -89,7 +85,7 @@
             position: absolute;
             width: 100%;
             height: 20px;
-            background: #333;
+            background: rgba(51, 51, 51, 0.7);
             z-index: 3;
         }
         
@@ -259,6 +255,7 @@
 </head>
 <body>
     <div id="game-wrapper">
+        <div id="game-bg"></div>
         <div id="game-container">
             <div id="top-floor"></div>
             <div id="bottom-floor"></div>
@@ -315,6 +312,7 @@
         // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
+        const gameBg = document.getElementById('game-bg');
         const scoreDisplay = document.getElementById('score-display');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
@@ -340,16 +338,49 @@
         let currentSpeedMultiplier = 1;
         let isShowingChallenge = false;
         let currentChallenge = null;
-        let lastObstaclePosition = 'bottom'; // Start with bottom floor
-        let patternBroken = false; // Track if we've broken the pattern
+        let lastObstaclePosition = 'bottom';
+        let patternBroken = false;
+        let currentBg = 'NBG.png';
+        let bgChangedAtScore = 0;
         
         // Initialize game dimensions
         function initGameSize() {
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
-            playerY = gameHeight - 45 - 20; // Adjusted for 45px height
+            playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
+            
+            // Set initial background
+            gameBg.style.backgroundImage = `url('${currentBg}')`;
+            gameBg.style.opacity = 1;
+        }
+        
+        // Change background with fade effect
+        function changeBackground() {
+            const nextBg = currentBg === 'NBG.png' ? 'DBG.png' : 'NBG.png';
+            
+            // Create temporary element for preloading
+            const tempImg = new Image();
+            tempImg.src = nextBg;
+            
+            tempImg.onload = function() {
+                gameBg.style.opacity = 0;
+                
+                setTimeout(() => {
+                    currentBg = nextBg;
+                    gameBg.style.backgroundImage = `url('${currentBg}')`;
+                    gameBg.style.opacity = 1;
+                    bgChangedAtScore = score;
+                }, 500);
+            };
+        }
+        
+        // Check if background should change
+        function checkBackgroundChange() {
+            if (score >= bgChangedAtScore + 100) {
+                changeBackground();
+            }
         }
         
         // Initialize game
@@ -360,8 +391,12 @@
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
             currentChallenge = null;
-            lastObstaclePosition = 'bottom'; // Reset to bottom
+            lastObstaclePosition = 'bottom';
             patternBroken = false;
+            currentBg = 'NBG.png';
+            bgChangedAtScore = 0;
+            gameBg.style.backgroundImage = "url('NBG.png')";
+            gameBg.style.opacity = 1;
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -434,8 +469,13 @@
                 ) {
                     setTimeout(() => {
                         if (!isShowingChallenge) {
-                            gameOver();
-                            showRandomChallenge();
+                            // Only show challenge if score >= 100
+                            if (score >= 100) {
+                                gameOver();
+                                showRandomChallenge();
+                            } else {
+                                gameOver();
+                            }
                         }
                     }, 100);
                 }
@@ -445,6 +485,7 @@
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
                     increaseScore();
+                    checkBackgroundChange();
                 }
             }
         }
@@ -456,20 +497,16 @@
         
         // Create a new obstacle
         function createObstacle() {
-            // Determine obstacle position (alternate between top and bottom with occasional breaks)
             let isTopObstacle;
             
-            // 10% chance to break the pattern (except on first obstacle)
             if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
-                isTopObstacle = lastObstaclePosition === 'top'; // Reverse the expected pattern
+                isTopObstacle = lastObstaclePosition === 'top';
                 patternBroken = true;
             } else {
-                // Follow the normal pattern
                 isTopObstacle = lastObstaclePosition === 'bottom';
                 patternBroken = false;
             }
             
-            // For top obstacles, decide if horizontal or vertical (50/50)
             const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
             
             const obstacle = document.createElement('div');
@@ -480,13 +517,13 @@
             
             if (isTopObstacle) {
                 if (isHorizontal) {
-                    y = 20; // Right on the top floor
+                    y = 20;
                 } else {
-                    y = 20 + Math.random() * (gameHeight - 100); // Somewhere between top and bottom
+                    y = 20 + Math.random() * (gameHeight - 100);
                 }
                 lastObstaclePosition = 'top';
             } else {
-                y = gameHeight - height - 20; // Right on the bottom floor
+                y = gameHeight - height - 20;
                 lastObstaclePosition = 'bottom';
             }
             
@@ -510,14 +547,14 @@
             if (!gameIsRunning) return;
             
             isOnTopFloor = !isOnTopFloor;
-            playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20; // Adjusted for 45px height
+            playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
         }
         
         // Increase score
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            currentSpeedMultiplier = 1 + (score * 0.011);
+            currentSpeedMultiplier = 1 + (score * 0.02); // Changed from 0.011 to 0.02
         }
         
         // End the game
@@ -535,7 +572,6 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'flex';
             
-            // Randomly select challenge (50/50 chance)
             if (Math.random() > 0.5) {
                 currentChallenge = 'tic-tac-toe';
                 ticTacToeGame.style.display = 'block';
@@ -601,7 +637,6 @@
             
             if (gameBoard[index] !== '') return;
             
-            // Player move
             gameBoard[index] = currentPlayer;
             cell.textContent = currentPlayer;
             
@@ -626,7 +661,6 @@
                 return;
             }
             
-            // Computer move
             currentPlayer = 'O';
             document.getElementById('challenge-result').textContent = "Computer's turn...";
             
@@ -665,7 +699,7 @@
         function makeAIMove() {
             const availableSpots = gameBoard.map((spot, index) => spot === '' ? index : null).filter(val => val !== null);
             
-            // 1. Check for winning move
+            // Check for winning move
             for (let i = 0; i < availableSpots.length; i++) {
                 const index = availableSpots[i];
                 gameBoard[index] = 'O';
@@ -676,7 +710,7 @@
                 gameBoard[index] = '';
             }
             
-            // 2. Block player's winning move
+            // Block player's winning move
             for (let i = 0; i < availableSpots.length; i++) {
                 const index = availableSpots[i];
                 gameBoard[index] = 'X';
@@ -688,14 +722,14 @@
                 gameBoard[index] = '';
             }
             
-            // 3. Take center if available
+            // Take center if available
             if (gameBoard[4] === '') {
                 gameBoard[4] = 'O';
                 document.querySelector('.cell[data-index="4"]').textContent = 'O';
                 return;
             }
             
-            // 4. Take a corner if available
+            // Take a corner if available
             const corners = [0, 2, 6, 8];
             const availableCorners = corners.filter(index => gameBoard[index] === '');
             if (availableCorners.length > 0) {
@@ -705,7 +739,7 @@
                 return;
             }
             
-            // 5. Take any available spot
+            // Take any available spot
             const randomSpot = availableSpots[Math.floor(Math.random() * availableSpots.length)];
             gameBoard[randomSpot] = 'O';
             document.querySelector(`.cell[data-index="${randomSpot}"]`).textContent = 'O';
@@ -713,9 +747,9 @@
         
         function checkWinner(player) {
             const winPatterns = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-                [0, 4, 8], [2, 4, 6]             // diagonals
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
             ];
             
             for (let pattern of winPatterns) {
@@ -852,7 +886,7 @@
             }
         });
         
-        // Handle window resize and orientation change
+        // Handle window resize
         window.addEventListener('resize', initGameSize);
         window.addEventListener('orientationchange', initGameSize);
         
