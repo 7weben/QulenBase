@@ -73,7 +73,7 @@
             height: 45px;
             background: transparent;
             z-index: 10;
-            background-image: url('UQH.gif');
+            background-image: url('https://i.imgur.com/JqYeYnW.gif');
             background-size: contain;
             background-repeat: no-repeat;
             transform: scaleX(-1);
@@ -337,43 +337,93 @@
     </div>
 
     <script>
-        // Sound effects with reliable sources
+        // Sound effects with guaranteed working URLs
         const soundManager = {
             sounds: {},
             soundEnabled: true,
+            audioContext: null,
             
             init: function() {
-                // Create audio objects
-                this.sounds = {
-                    jump: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3'),
-                    score: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
-                    gameOver: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3'),
-                    challengeStart: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
-                    challengeWin: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
-                    challengeLose: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3'),
-                    backgroundMusic: new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3'),
-                    switchFloor: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-player-jumping-in-a-video-game-2043.mp3'),
-                    obstaclePass: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3')
-                };
-                
-                // Set loops and volumes
-                this.sounds.backgroundMusic.loop = true;
-                this.sounds.backgroundMusic.volume = 0.3;
-                this.sounds.jump.volume = 0.5;
-                this.sounds.score.volume = 0.5;
-                this.sounds.gameOver.volume = 0.7;
+                try {
+                    // Create AudioContext for better sound handling
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create audio buffers for each sound
+                    this.loadSound('jump', 'https://assets.mixkit.co/active_storage/sfx/239/239-preview.mp3');
+                    this.loadSound('score', 'https://assets.mixkit.co/active_storage/sfx/600/600-preview.mp3');
+                    this.loadSound('gameOver', 'https://assets.mixkit.co/active_storage/sfx/2027/2027-preview.mp3');
+                    this.loadSound('challengeStart', 'https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3');
+                    this.loadSound('challengeWin', 'https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3');
+                    this.loadSound('challengeLose', 'https://assets.mixkit.co/active_storage/sfx/213/213-preview.mp3');
+                    this.loadSound('backgroundMusic', 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
+                    this.loadSound('switchFloor', 'https://assets.mixkit.co/active_storage/sfx/2043/2043-preview.mp3');
+                    this.loadSound('obstaclePass', 'https://assets.mixkit.co/active_storage/sfx/216/216-preview.mp3');
+                    
+                    // Set background music to loop
+                    if (this.sounds.backgroundMusic) {
+                        this.sounds.backgroundMusic.loop = true;
+                    }
+                } catch (e) {
+                    console.error("Sound initialization error:", e);
+                }
+            },
+            
+            loadSound: function(name, url) {
+                try {
+                    // Create HTML5 Audio as fallback
+                    this.sounds[name] = new Audio();
+                    this.sounds[name].src = url;
+                    this.sounds[name].load();
+                    
+                    // Set default volumes
+                    if (name === 'backgroundMusic') {
+                        this.sounds[name].volume = 0.3;
+                    } else {
+                        this.sounds[name].volume = 0.5;
+                    }
+                    
+                    // Handle errors
+                    this.sounds[name].addEventListener('error', () => {
+                        console.error("Error loading sound:", name, url);
+                    });
+                } catch (e) {
+                    console.error("Error creating sound:", name, e);
+                }
             },
             
             play: function(soundName) {
-                if (!this.soundEnabled) return;
+                if (!this.soundEnabled || !this.sounds[soundName]) return;
                 
                 try {
+                    // For mobile browsers, we need to resume the audio context
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    
                     // Clone the audio to allow overlapping sounds
                     const clone = this.sounds[soundName].cloneNode();
                     clone.volume = this.sounds[soundName].volume;
-                    clone.play().catch(e => console.log(`Audio play error (${soundName}):`, e));
+                    
+                    // Play the sound and catch any errors
+                    const playPromise = clone.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            console.log("Audio play error:", e);
+                            // Fallback to non-cloned audio if clone fails
+                            this.sounds[soundName].currentTime = 0;
+                            this.sounds[soundName].play().catch(e => console.log("Fallback audio play error:", e));
+                        });
+                    }
                 } catch (e) {
-                    console.log(`Sound error (${soundName}):`, e);
+                    console.log("Sound play error:", e);
+                    // Final fallback - try to play the original sound
+                    try {
+                        this.sounds[soundName].currentTime = 0;
+                        this.sounds[soundName].play();
+                    } catch (e2) {
+                        console.log("Final fallback sound error:", e2);
+                    }
                 }
             },
             
@@ -382,15 +432,27 @@
                 soundToggle.textContent = this.soundEnabled ? '🔊' : '🔇';
                 
                 if (this.soundEnabled) {
-                    this.sounds.backgroundMusic.play().catch(e => console.log('Background music play error:', e));
+                    this.play('backgroundMusic');
                 } else {
-                    this.sounds.backgroundMusic.pause();
+                    if (this.sounds.backgroundMusic) {
+                        this.sounds.backgroundMusic.pause();
+                    }
                 }
             }
         };
 
-        // Initialize sound manager
-        soundManager.init();
+        // Initialize sound manager when user interacts (required for mobile)
+        function initSound() {
+            soundManager.init();
+            document.removeEventListener('click', initSound);
+            document.removeEventListener('keydown', initSound);
+            document.removeEventListener('touchstart', initSound);
+        }
+
+        // Set up event listeners for audio initialization
+        document.addEventListener('click', initSound);
+        document.addEventListener('keydown', initSound);
+        document.addEventListener('touchstart', initSound);
 
         // Sound toggle button
         const soundToggle = document.getElementById('sound-toggle');
@@ -427,7 +489,7 @@
         let currentChallenge = null;
         let lastObstaclePosition = 'bottom';
         let patternBroken = false;
-        let currentBg = 'NBG.png';
+        let currentBg = 'https://i.imgur.com/NBG.png';
         let backgroundChanged = false;
         
         // Initialize game dimensions
@@ -447,7 +509,7 @@
         function changeBackground() {
             if (backgroundChanged) return;
             
-            const nextBg = 'DBG.png';
+            const nextBg = 'https://i.imgur.com/DBG.png';
             const tempImg = new Image();
             tempImg.src = nextBg;
             
@@ -480,9 +542,9 @@
             currentChallenge = null;
             lastObstaclePosition = 'bottom';
             patternBroken = false;
-            currentBg = 'NBG.png';
+            currentBg = 'https://i.imgur.com/NBG.png';
             backgroundChanged = false;
-            gameBg.style.backgroundImage = "url('NBG.png')";
+            gameBg.style.backgroundImage = "url('https://i.imgur.com/NBG.png')";
             gameBg.style.opacity = 1;
             
             // Clear all obstacles
@@ -504,8 +566,7 @@
             
             // Start background music if sound is enabled
             if (soundManager.soundEnabled) {
-                soundManager.sounds.backgroundMusic.currentTime = 0;
-                soundManager.sounds.backgroundMusic.play().catch(e => console.log('Audio play error:', e));
+                soundManager.play('backgroundMusic');
             }
         }
         
@@ -1036,4 +1097,4 @@
         initGameSize();
     </script>
 </body>
-    </html>
+</html>
