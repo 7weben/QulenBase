@@ -324,7 +324,7 @@
     <script>
         // Audio System with Careful Error Handling
         const AudioSystem = {
-            // Sound effects with multiple fallback sources
+            // Sound effects
             sounds: {
                 jump: {
                     src: 'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3',
@@ -348,14 +348,11 @@
             // Initialize audio system
             init: function() {
                 try {
-                    // Initialize Web Audio API
+                    // Create audio context
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
-                    // Initialize background music
-                    this.initBackgroundMusic();
-                    
-                    // Initialize sound effects
-                    this.initSoundEffects();
+                    // Initialize sounds
+                    this.initSounds();
                     
                     // Setup audio start on user interaction
                     this.setupAudioStart();
@@ -364,34 +361,19 @@
                 }
             },
             
-            // Initialize background music
-            initBackgroundMusic: function() {
-                try {
-                    this.bgMusic.audio = new Audio(this.bgMusic.src);
-                    this.bgMusic.audio.loop = true;
-                    this.bgMusic.audio.volume = this.bgMusic.volume;
-                    
-                    this.bgMusic.audio.addEventListener('error', () => {
-                        console.error("Background music failed to load");
-                    });
-                } catch (e) {
-                    console.error("Background music init error:", e);
-                }
-            },
-            
-            // Initialize sound effects
-            initSoundEffects: function() {
+            // Initialize all sounds
+            initSounds: function() {
+                // Initialize background music
+                this.bgMusic.audio = new Audio(this.bgMusic.src);
+                this.bgMusic.audio.loop = true;
+                this.bgMusic.audio.volume = this.bgMusic.volume;
+                this.bgMusic.audio.preload = 'auto';
+                
+                // Initialize sound effects
                 for (const [name, sound] of Object.entries(this.sounds)) {
-                    try {
-                        sound.audio = new Audio(sound.src);
-                        sound.audio.volume = sound.volume;
-                        
-                        sound.audio.addEventListener('error', () => {
-                            console.error(`Sound ${name} failed to load`);
-                        });
-                    } catch (e) {
-                        console.error(`Sound ${name} init error:`, e);
-                    }
+                    sound.audio = new Audio(sound.src);
+                    sound.audio.volume = sound.volume;
+                    sound.audio.preload = 'auto';
                 }
             },
             
@@ -409,11 +391,7 @@
                         }
                         
                         // Start background music
-                        if (this.bgMusic.audio) {
-                            this.bgMusic.audio.play().catch(e => {
-                                console.error("Background music play failed:", e);
-                            });
-                        }
+                        this.playMusic();
                         
                         // Remove event listeners after first interaction
                         document.removeEventListener('click', startAudio);
@@ -430,21 +408,33 @@
                 document.addEventListener('touchstart', startAudio, { once: true });
             },
             
+            // Play background music
+            playMusic: function() {
+                try {
+                    this.bgMusic.audio.currentTime = 0;
+                    this.bgMusic.audio.play().catch(e => {
+                        console.error("Background music play failed:", e);
+                    });
+                } catch (e) {
+                    console.error("Play music error:", e);
+                }
+            },
+            
             // Play sound effect
             play: function(soundName) {
                 try {
-                    if (!this.sounds[soundName] || !this.sounds[soundName].audio) return;
+                    const sound = this.sounds[soundName];
+                    if (!sound || !sound.audio) return;
                     
-                    // Clone the audio to allow overlapping sounds
-                    const clone = new Audio(this.sounds[soundName].src);
-                    clone.volume = this.sounds[soundName].volume;
+                    // Create a new audio instance each time to allow overlapping sounds
+                    const audio = new Audio(sound.src);
+                    audio.volume = sound.volume;
                     
-                    // Play with error handling
-                    clone.play().catch(e => {
+                    audio.play().catch(e => {
                         console.error(`Sound ${soundName} play failed:`, e);
                         // Fallback to original sound if clone fails
-                        this.sounds[soundName].audio.currentTime = 0;
-                        this.sounds[soundName].audio.play().catch(e => {
+                        sound.audio.currentTime = 0;
+                        sound.audio.play().catch(e => {
                             console.error(`Fallback sound ${soundName} play failed:`, e);
                         });
                     });
@@ -455,9 +445,13 @@
             
             // Stop background music
             stopMusic: function() {
-                if (this.bgMusic.audio) {
-                    this.bgMusic.audio.pause();
-                    this.bgMusic.audio.currentTime = 0;
+                try {
+                    if (this.bgMusic.audio) {
+                        this.bgMusic.audio.pause();
+                        this.bgMusic.audio.currentTime = 0;
+                    }
+                } catch (e) {
+                    console.error("Stop music error:", e);
                 }
             }
         };
@@ -721,7 +715,8 @@
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            currentSpeedMultiplier = 1 + (score * 0.02);
+            // Set speed multiplier to increase by 0.025x per score
+            currentSpeedMultiplier = 1 + (score * 0.025);
         }
         
         // End the game
@@ -1072,4 +1067,4 @@
         initGameSize();
     </script>
 </body>
-</html>
+    </html>
