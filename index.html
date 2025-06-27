@@ -326,32 +326,29 @@
         const AudioSystem = {
             // Sound effects with multiple fallback sources
             sounds: {
-                jump: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-player-jumping-in-a-video-game-2043.mp3'
-                ],
-                death: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3'
-                ]
+                jump: {
+                    src: 'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3',
+                    audio: null,
+                    volume: 0.5
+                },
+                death: {
+                    src: 'https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3',
+                    audio: null,
+                    volume: 0.5
+                }
             },
             
-            // Premium Background Music
-            bgMusic: [
-                'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3', // Premium suspenseful game music
-                'https://assets.mixkit.co/music/preview/mixkit-racing-retro-game-668.mp3' // Fallback
-            ],
-            
-            // Audio objects
-            audioObjects: {},
-            bgMusicObject: null,
-            audioContext: null,
-            audioEnabled: false,
+            // Background music
+            bgMusic: {
+                src: 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3',
+                audio: null,
+                volume: 0.3
+            },
             
             // Initialize audio system
             init: function() {
                 try {
-                    // Create Web Audio API context
+                    // Initialize Web Audio API
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
                     // Initialize background music
@@ -360,25 +357,22 @@
                     // Initialize sound effects
                     this.initSoundEffects();
                     
-                    // Start audio on user interaction
+                    // Setup audio start on user interaction
                     this.setupAudioStart();
                 } catch (e) {
-                    console.error("Audio system initialization error:", e);
+                    console.error("Audio initialization error:", e);
                 }
             },
             
             // Initialize background music
             initBackgroundMusic: function() {
                 try {
-                    this.bgMusicObject = new Audio(this.bgMusic[0]);
-                    this.bgMusicObject.loop = true;
-                    this.bgMusicObject.volume = 0.3;
+                    this.bgMusic.audio = new Audio(this.bgMusic.src);
+                    this.bgMusic.audio.loop = true;
+                    this.bgMusic.audio.volume = this.bgMusic.volume;
                     
-                    // Fallback if first music fails
-                    this.bgMusicObject.addEventListener('error', () => {
-                        console.log("Primary BG music failed, trying fallback");
-                        this.bgMusicObject.src = this.bgMusic[1];
-                        this.bgMusicObject.load();
+                    this.bgMusic.audio.addEventListener('error', () => {
+                        console.error("Background music failed to load");
                     });
                 } catch (e) {
                     console.error("Background music init error:", e);
@@ -387,19 +381,16 @@
             
             // Initialize sound effects
             initSoundEffects: function() {
-                for (const [name, urls] of Object.entries(this.sounds)) {
+                for (const [name, sound] of Object.entries(this.sounds)) {
                     try {
-                        this.audioObjects[name] = new Audio(urls[0]);
-                        this.audioObjects[name].volume = 0.4;
+                        sound.audio = new Audio(sound.src);
+                        sound.audio.volume = sound.volume;
                         
-                        // Set fallback source if first fails
-                        this.audioObjects[name].addEventListener('error', () => {
-                            console.log(`Sound ${name} failed, trying fallback`);
-                            this.audioObjects[name].src = urls[1];
-                            this.audioObjects[name].load();
+                        sound.audio.addEventListener('error', () => {
+                            console.error(`Sound ${name} failed to load`);
                         });
                     } catch (e) {
-                        console.error(`Sound effect ${name} init error:`, e);
+                        console.error(`Sound ${name} init error:`, e);
                     }
                 }
             },
@@ -407,28 +398,22 @@
             // Setup audio to start on user interaction
             setupAudioStart: function() {
                 const startAudio = () => {
-                    if (this.audioEnabled) return;
-                    
                     try {
                         // Resume audio context if suspended
                         if (this.audioContext.state === 'suspended') {
                             this.audioContext.resume().then(() => {
                                 console.log("Audio context resumed");
+                            }).catch(e => {
+                                console.error("Audio context resume failed:", e);
                             });
                         }
                         
                         // Start background music
-                        this.bgMusicObject.play().then(() => {
-                            console.log("Background music started");
-                            this.audioEnabled = true;
-                        }).catch(e => {
-                            console.log("Background music play error:", e);
-                            // Try fallback
-                            this.bgMusicObject.src = this.bgMusic[1];
-                            this.bgMusicObject.play().catch(e => {
-                                console.log("Fallback BG music also failed");
+                        if (this.bgMusic.audio) {
+                            this.bgMusic.audio.play().catch(e => {
+                                console.error("Background music play failed:", e);
                             });
-                        });
+                        }
                         
                         // Remove event listeners after first interaction
                         document.removeEventListener('click', startAudio);
@@ -447,22 +432,20 @@
             
             // Play sound effect
             play: function(soundName) {
-                if (!this.audioEnabled) return;
-                
                 try {
-                    if (!this.audioObjects[soundName]) return;
+                    if (!this.sounds[soundName] || !this.sounds[soundName].audio) return;
                     
                     // Clone the audio to allow overlapping sounds
-                    const clone = new Audio(this.audioObjects[soundName].src);
-                    clone.volume = this.audioObjects[soundName].volume;
+                    const clone = new Audio(this.sounds[soundName].src);
+                    clone.volume = this.sounds[soundName].volume;
                     
                     // Play with error handling
                     clone.play().catch(e => {
-                        console.log(`Sound ${soundName} play error:`, e);
+                        console.error(`Sound ${soundName} play failed:`, e);
                         // Fallback to original sound if clone fails
-                        this.audioObjects[soundName].currentTime = 0;
-                        this.audioObjects[soundName].play().catch(e => {
-                            console.log(`Fallback sound ${soundName} play error:`, e);
+                        this.sounds[soundName].audio.currentTime = 0;
+                        this.sounds[soundName].audio.play().catch(e => {
+                            console.error(`Fallback sound ${soundName} play failed:`, e);
                         });
                     });
                 } catch (e) {
@@ -472,9 +455,9 @@
             
             // Stop background music
             stopMusic: function() {
-                if (this.bgMusicObject) {
-                    this.bgMusicObject.pause();
-                    this.bgMusicObject.currentTime = 0;
+                if (this.bgMusic.audio) {
+                    this.bgMusic.audio.pause();
+                    this.bgMusic.audio.currentTime = 0;
                 }
             }
         };
@@ -590,11 +573,8 @@
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
             
-            // Restart background music
-            AudioSystem.stopMusic();
-            setTimeout(() => {
-                AudioSystem.init();
-            }, 100);
+            // Restart audio system
+            AudioSystem.init();
         }
         
         // Calculate current speed
