@@ -330,46 +330,23 @@
                     'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3',
                     'https://assets.mixkit.co/sfx/preview/mixkit-player-jumping-in-a-video-game-2043.mp3'
                 ],
-                score: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'
-                ],
-                gameOver: [
+                death: [
                     'https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3',
                     'https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3'
-                ],
-                challengeStart: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'
-                ],
-                challengeWin: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'
-                ],
-                challengeLose: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3'
-                ],
-                switchFloor: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-arrow-whoosh-1491.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3'
-                ],
-                obstaclePass: [
-                    'https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-919.mp3',
-                    'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'
                 ]
             },
             
-            // Background music options
+            // Premium Background Music
             bgMusic: [
-                'https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3',
-                'https://assets.mixkit.co/music/preview/mixkit-racing-retro-game-668.mp3'
+                'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3', // Premium suspenseful game music
+                'https://assets.mixkit.co/music/preview/mixkit-racing-retro-game-668.mp3' // Fallback
             ],
             
             // Audio objects
             audioObjects: {},
             bgMusicObject: null,
             audioContext: null,
+            audioEnabled: false,
             
             // Initialize audio system
             init: function() {
@@ -399,6 +376,7 @@
                     
                     // Fallback if first music fails
                     this.bgMusicObject.addEventListener('error', () => {
+                        console.log("Primary BG music failed, trying fallback");
                         this.bgMusicObject.src = this.bgMusic[1];
                         this.bgMusicObject.load();
                     });
@@ -416,6 +394,7 @@
                         
                         // Set fallback source if first fails
                         this.audioObjects[name].addEventListener('error', () => {
+                            console.log(`Sound ${name} failed, trying fallback`);
                             this.audioObjects[name].src = urls[1];
                             this.audioObjects[name].load();
                         });
@@ -428,15 +407,27 @@
             // Setup audio to start on user interaction
             setupAudioStart: function() {
                 const startAudio = () => {
+                    if (this.audioEnabled) return;
+                    
                     try {
                         // Resume audio context if suspended
                         if (this.audioContext.state === 'suspended') {
-                            this.audioContext.resume();
+                            this.audioContext.resume().then(() => {
+                                console.log("Audio context resumed");
+                            });
                         }
                         
                         // Start background music
-                        this.bgMusicObject.play().catch(e => {
+                        this.bgMusicObject.play().then(() => {
+                            console.log("Background music started");
+                            this.audioEnabled = true;
+                        }).catch(e => {
                             console.log("Background music play error:", e);
+                            // Try fallback
+                            this.bgMusicObject.src = this.bgMusic[1];
+                            this.bgMusicObject.play().catch(e => {
+                                console.log("Fallback BG music also failed");
+                            });
                         });
                         
                         // Remove event listeners after first interaction
@@ -449,35 +440,41 @@
                 };
                 
                 // Set up event listeners for first interaction
-                document.addEventListener('click', startAudio);
-                document.addEventListener('keydown', startAudio);
-                document.addEventListener('touchstart', startAudio);
+                document.addEventListener('click', startAudio, { once: true });
+                document.addEventListener('keydown', startAudio, { once: true });
+                document.addEventListener('touchstart', startAudio, { once: true });
             },
             
             // Play sound effect
             play: function(soundName) {
+                if (!this.audioEnabled) return;
+                
                 try {
                     if (!this.audioObjects[soundName]) return;
                     
                     // Clone the audio to allow overlapping sounds
-                    const clone = this.audioObjects[soundName].cloneNode();
+                    const clone = new Audio(this.audioObjects[soundName].src);
                     clone.volume = this.audioObjects[soundName].volume;
                     
                     // Play with error handling
-                    const playPromise = clone.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise.catch(e => {
-                            console.log(`Sound ${soundName} play error:`, e);
-                            // Fallback to original sound if clone fails
-                            this.audioObjects[soundName].currentTime = 0;
-                            this.audioObjects[soundName].play().catch(e => {
-                                console.log(`Fallback sound ${soundName} play error:`, e);
-                            });
+                    clone.play().catch(e => {
+                        console.log(`Sound ${soundName} play error:`, e);
+                        // Fallback to original sound if clone fails
+                        this.audioObjects[soundName].currentTime = 0;
+                        this.audioObjects[soundName].play().catch(e => {
+                            console.log(`Fallback sound ${soundName} play error:`, e);
                         });
-                    }
+                    });
                 } catch (e) {
                     console.error(`Sound ${soundName} play error:`, e);
+                }
+            },
+            
+            // Stop background music
+            stopMusic: function() {
+                if (this.bgMusicObject) {
+                    this.bgMusicObject.pause();
+                    this.bgMusicObject.currentTime = 0;
                 }
             }
         };
@@ -592,6 +589,12 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
+            
+            // Restart background music
+            AudioSystem.stopMusic();
+            setTimeout(() => {
+                AudioSystem.init();
+            }, 100);
         }
         
         // Calculate current speed
@@ -647,8 +650,8 @@
                 ) {
                     setTimeout(() => {
                         if (!isShowingChallenge) {
-                            // Play collision sound
-                            AudioSystem.play('gameOver');
+                            // Play death sound
+                            AudioSystem.play('death');
                             
                             // Only show challenge if score >= 100
                             if (score >= 100) {
@@ -731,7 +734,7 @@
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
             
             // Play jump sound
-            AudioSystem.play('switchFloor');
+            AudioSystem.play('jump');
         }
         
         // Increase score
@@ -739,14 +742,6 @@
             score++;
             scoreDisplay.textContent = score;
             currentSpeedMultiplier = 1 + (score * 0.02);
-            
-            // Play score sound every 10 points
-            if (score % 10 === 0) {
-                AudioSystem.play('score');
-            }
-            
-            // Play obstacle pass sound
-            AudioSystem.play('obstaclePass');
         }
         
         // End the game
@@ -757,8 +752,8 @@
             finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
             
-            // Play game over sound
-            AudioSystem.play('gameOver');
+            // Stop background music
+            AudioSystem.stopMusic();
         }
         
         // Show random challenge
@@ -766,9 +761,6 @@
             isShowingChallenge = true;
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'flex';
-            
-            // Play challenge start sound
-            AudioSystem.play('challengeStart');
             
             if (Math.random() > 0.5) {
                 currentChallenge = 'tic-tac-toe';
@@ -819,9 +811,6 @@
                     document.getElementById('challenge-result').textContent = "Time's up! Game over.";
                     gameActive = false;
                     
-                    // Play challenge lose sound
-                    AudioSystem.play('challengeLose');
-                    
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
                         gameOverScreen.style.display = 'block';
@@ -842,16 +831,10 @@
             gameBoard[index] = currentPlayer;
             cell.textContent = currentPlayer;
             
-            // Play move sound
-            AudioSystem.play('jump');
-            
             if (checkWinner('X')) {
                 clearInterval(timerInterval);
                 document.getElementById('challenge-result').textContent = `You won! Continuing your run...`;
                 gameActive = false;
-                
-                // Play challenge win sound
-                AudioSystem.play('challengeWin');
                 
                 setTimeout(() => {
                     challengeContainer.style.display = 'none';
@@ -881,9 +864,6 @@
                         clearInterval(timerInterval);
                         document.getElementById('challenge-result').textContent = `Computer won! Game over.`;
                         gameActive = false;
-                        
-                        // Play challenge lose sound
-                        AudioSystem.play('challengeLose');
                         
                         setTimeout(() => {
                             challengeContainer.style.display = 'none';
@@ -1027,9 +1007,6 @@
                     clearInterval(wordTimerInterval);
                     document.getElementById('challenge-result-word').textContent = "Time's up! Game over.";
                     
-                    // Play challenge lose sound
-                    AudioSystem.play('challengeLose');
-                    
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
                         gameOverScreen.style.display = 'block';
@@ -1046,9 +1023,6 @@
                 clearInterval(wordTimerInterval);
                 document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
                 
-                // Play challenge win sound
-                AudioSystem.play('challengeWin');
-                
                 setTimeout(() => {
                     challengeContainer.style.display = 'none';
                     continueAfterChallenge();
@@ -1056,9 +1030,6 @@
             } else {
                 document.getElementById('challenge-result-word').textContent = "Wrong guess! Try again.";
                 document.getElementById('word-input').value = '';
-                
-                // Play wrong guess sound
-                AudioSystem.play('jump');
             }
         }
         
@@ -1068,6 +1039,9 @@
             gameIsRunning = true;
             lastObstacleTime = Date.now();
             gameLoop();
+            
+            // Restart background music
+            AudioSystem.init();
         }
         
         // Event listeners
@@ -1097,9 +1071,6 @@
             challengeContainer.style.display = 'none';
             gameOverScreen.style.display = 'block';
             isShowingChallenge = false;
-            
-            // Play cancel sound
-            AudioSystem.play('jump');
         });
         
         // Tic Tac Toe event listeners
