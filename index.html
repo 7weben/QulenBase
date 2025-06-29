@@ -152,6 +152,54 @@
             cursor: pointer;
             margin-top: 15px;
         }
+        
+        /* New styles for score pop effect */
+        .score-pop {
+            position: absolute;
+            font-size: 24px;
+            color: #FFD700;
+            z-index: 25;
+            animation: pop 0.5s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 0.7),
+                0 0 10px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        
+        /* Screen shake effect */
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        #high-score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #FFD700;
+            z-index: 20;
+            text-shadow: 
+                1px 1px 2px rgba(0, 0, 0, 0.7),
+                0 0 5px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -161,10 +209,12 @@
             <div id="top-floor"></div>
             <div id="bottom-floor"></div>
             <div id="player"></div>
+            <div id="high-score">High Score: 0</div>
             <div id="score-display">0</div>
             <div id="game-over">
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
+                <p id="new-high-score" style="color: gold; display: none;">New High Score!</p>
                 <button id="restart-btn">Play Again</button>
             </div>
         </div>
@@ -183,9 +233,11 @@
         const gameContainer = document.getElementById('game-container');
         const gameBg = document.getElementById('game-bg');
         const scoreDisplay = document.getElementById('score-display');
+        const highScoreDisplay = document.getElementById('high-score');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        const newHighScoreDisplay = document.getElementById('new-high-score');
         
         // Game variables
         let gameHeight, gameWidth;
@@ -193,6 +245,7 @@
         let isOnTopFloor = false;
         let gameIsRunning = false;
         let score = 0;
+        let highScore = localStorage.getItem('precisionDashHighScore') || 0;
         let obstacleGroups = [];
         let lastObstacleTime = 0;
         let animationId;
@@ -209,6 +262,10 @@
             playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
+            
+            // Update high score display
+            highScoreDisplay.textContent = `High Score: ${highScore}`;
+            highScoreDisplay.style.display = 'block';
         }
         
         // Change background to DBG.png (only once at 100 score)
@@ -243,6 +300,7 @@
             lastObstacleType = 'triangle';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
+            newHighScoreDisplay.style.display = 'none';
             
             // Clear all obstacles
             obstacleGroups.forEach(group => {
@@ -346,7 +404,7 @@
             }
         }
         
-        // Create a group of obstacles (2-3 triangles or 1 rocket)
+        // Create a group of obstacles (2-3 triangles or 1 rocket in middle)
         function createObstacleGroup() {
             // 20% chance to spawn a rocket instead of triangles
             if (Math.random() < 0.2 && lastObstacleType !== 'rocket') {
@@ -407,14 +465,14 @@
             
             const width = 40;
             const height = 60;
-            // Random vertical position in middle space (not on floors)
-            const y = 20 + Math.random() * (gameHeight - height - 40);
+            // Fixed position in the middle of the play area
+            const middleY = (gameHeight / 2) - (height / 2);
             const x = gameWidth;
             
             obstacle.style.left = x + 'px';
             obstacle.style.width = width + 'px';
             obstacle.style.height = height + 'px';
-            obstacle.style.top = y + 'px';
+            obstacle.style.top = middleY + 'px';
             
             gameContainer.appendChild(obstacle);
             
@@ -422,10 +480,27 @@
                 element: obstacle,
                 width: width,
                 height: height,
-                y: y
+                y: middleY
             });
             
             obstacleGroups.push(group);
+        }
+        
+        // Create score pop effect
+        function createScorePop() {
+            const pop = document.createElement('div');
+            pop.className = 'score-pop';
+            pop.textContent = '+1';
+            pop.style.left = `${playerX + 22}px`;
+            pop.style.top = `${playerY - 20}px`;
+            gameContainer.appendChild(pop);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                if (pop.parentNode) {
+                    gameContainer.removeChild(pop);
+                }
+            }, 500);
         }
         
         // Render game
@@ -450,6 +525,27 @@
             scoreDisplay.textContent = score;
             // Set speed multiplier to increase by 0.025x per score
             currentSpeedMultiplier = 1 + (score * 0.025);
+            
+            // Create score pop effect
+            createScorePop();
+        }
+        
+        // Screen shake effect
+        function screenShake() {
+            gameContainer.classList.add('shake');
+            setTimeout(() => {
+                gameContainer.classList.remove('shake');
+            }, 500);
+        }
+        
+        // Update high score
+        function updateHighScore() {
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('precisionDashHighScore', highScore);
+                newHighScoreDisplay.style.display = 'block';
+            }
+            highScoreDisplay.textContent = `High Score: ${highScore}`;
         }
         
         // End the game
@@ -458,6 +554,8 @@
             cancelAnimationFrame(animationId);
             
             finalScoreDisplay.textContent = score;
+            updateHighScore();
+            screenShake();
             gameOverScreen.style.display = 'block';
         }
         
@@ -474,6 +572,16 @@
         });
         
         gameContainer.addEventListener('click', () => {
+            if (gameIsRunning) {
+                switchFloor();
+            } else if (gameOverScreen.style.display !== 'block') {
+                startGame();
+            }
+        });
+        
+        // Touch support
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             if (gameIsRunning) {
                 switchFloor();
             } else if (gameOverScreen.style.display !== 'block') {
