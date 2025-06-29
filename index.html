@@ -188,7 +188,7 @@
         let isOnTopFloor = false;
         let gameIsRunning = false;
         let score = 0;
-        let obstacles = [];
+        let obstacleGroups = [];
         let lastObstacleTime = 0;
         let animationId;
         const baseSpeed = 6;
@@ -238,12 +238,14 @@
             gameBg.style.opacity = 1;
             
             // Clear all obstacles
-            obstacles.forEach(obstacle => {
-                if (obstacle.element.parentNode) {
-                    gameContainer.removeChild(obstacle.element);
-                }
+            obstacleGroups.forEach(group => {
+                group.obstacles.forEach(obstacle => {
+                    if (obstacle.element.parentNode) {
+                        gameContainer.removeChild(obstacle.element);
+                    }
+                });
             });
-            obstacles = [];
+            obstacleGroups = [];
             
             // Reset player position
             player.style.top = playerY + 'px';
@@ -282,49 +284,72 @@
             
             // Generate new obstacles
             if (currentTime - lastObstacleTime > 1000) {
-                createObstacles();
+                createObstacleGroup();
                 lastObstacleTime = currentTime;
             }
             
             // Move obstacles and check for collisions
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obstacle = obstacles[i];
-                const obstacleX = parseFloat(obstacle.element.style.left);
-                const obstacleY = parseFloat(obstacle.element.style.top);
-                const obstacleWidth = parseFloat(obstacle.element.style.width);
-                const obstacleHeight = parseFloat(obstacle.element.style.height);
+            for (let i = obstacleGroups.length - 1; i >= 0; i--) {
+                const group = obstacleGroups[i];
+                let allPassed = true;
                 
-                // Move obstacle at current speed
-                obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
-                
-                // Check for collision with player
-                if (
-                    playerX < obstacleX + obstacleWidth &&
-                    playerX + 45 > obstacleX &&
-                    playerY < obstacleY + obstacleHeight &&
-                    playerY + 45 > obstacleY
-                ) {
-                    gameOver();
-                    return;
+                for (let j = group.obstacles.length - 1; j >= 0; j--) {
+                    const obstacle = group.obstacles[j];
+                    const obstacleX = parseFloat(obstacle.element.style.left);
+                    const obstacleY = parseFloat(obstacle.element.style.top);
+                    const obstacleWidth = parseFloat(obstacle.element.style.width);
+                    const obstacleHeight = parseFloat(obstacle.element.style.height);
+                    
+                    // Move obstacle at current speed
+                    obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
+                    
+                    // Check if any obstacle in group is still on screen
+                    if (obstacleX + obstacleWidth > 0) {
+                        allPassed = false;
+                    }
+                    
+                    // Check for collision with player
+                    if (
+                        playerX < obstacleX + obstacleWidth &&
+                        playerX + 45 > obstacleX &&
+                        playerY < obstacleY + obstacleHeight &&
+                        playerY + 45 > obstacleY
+                    ) {
+                        gameOver();
+                        return;
+                    }
                 }
                 
-                // Remove obstacles that are off screen
-                if (obstacleX < -100) {
-                    gameContainer.removeChild(obstacle.element);
-                    obstacles.splice(i, 1);
+                // If all obstacles in group passed the screen
+                if (allPassed && !group.scored) {
+                    group.scored = true;
                     increaseScore();
                     checkBackgroundChange();
+                }
+                
+                // Remove group if all obstacles are off screen
+                if (allPassed) {
+                    group.obstacles.forEach(obstacle => {
+                        if (obstacle.element.parentNode) {
+                            gameContainer.removeChild(obstacle.element);
+                        }
+                    });
+                    obstacleGroups.splice(i, 1);
                 }
             }
         }
         
-        // Create random number of obstacles (1-3)
-        function createObstacles() {
+        // Create a group of obstacles (1-3 triangles)
+        function createObstacleGroup() {
             const isTopObstacle = lastObstaclePosition === 'bottom';
             lastObstaclePosition = isTopObstacle ? 'top' : 'bottom';
             
             const obstacleCount = Math.floor(Math.random() * 3) + 1; // 1-3 obstacles
             const gap = gameWidth / (obstacleCount + 1);
+            const group = {
+                obstacles: [],
+                scored: false
+            };
             
             for (let i = 0; i < obstacleCount; i++) {
                 const obstacle = document.createElement('div');
@@ -342,13 +367,15 @@
                 
                 gameContainer.appendChild(obstacle);
                 
-                obstacles.push({
+                group.obstacles.push({
                     element: obstacle,
                     width: width,
                     height: height,
                     y: y
                 });
             }
+            
+            obstacleGroups.push(group);
         }
         
         // Render game
@@ -367,7 +394,7 @@
             playJumpSound();
         }
         
-        // Increase score
+        // Increase score (1 point per group passed)
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
