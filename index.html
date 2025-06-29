@@ -65,6 +65,7 @@
             background-size: cover;
             background-position: center;
             transition: opacity 0.5s ease;
+            background-image: url('NBG.png');
         }
         
         #player {
@@ -322,7 +323,7 @@
     </div>
 
     <script>
-        // Simple Audio System for Jump Sound Only
+        // Simple Jump Sound Only
         const playJumpSound = () => {
             const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
             jumpSound.volume = 0.5;
@@ -360,7 +361,6 @@
         let currentChallenge = null;
         let lastObstaclePosition = 'bottom';
         let patternBroken = false;
-        let currentBg = 'NBG.png';
         let backgroundChanged = false;
         
         // Initialize game dimensions
@@ -370,30 +370,19 @@
             playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
-            
-            // Set initial background
-            gameBg.style.backgroundImage = `url('${currentBg}')`;
-            gameBg.style.opacity = 1;
         }
         
         // Change background to DBG.png (only once at 100 score)
         function changeBackground() {
             if (backgroundChanged) return;
+            backgroundChanged = true;
             
-            const nextBg = 'DBG.png';
-            const tempImg = new Image();
-            tempImg.src = nextBg;
+            gameBg.style.opacity = 0;
             
-            tempImg.onload = function() {
-                gameBg.style.opacity = 0;
-                
-                setTimeout(() => {
-                    currentBg = nextBg;
-                    gameBg.style.backgroundImage = `url('${currentBg}')`;
-                    gameBg.style.opacity = 1;
-                    backgroundChanged = true;
-                }, 500);
-            };
+            setTimeout(() => {
+                gameBg.style.backgroundImage = "url('DBG.png')";
+                gameBg.style.opacity = 1;
+            }, 500);
         }
         
         // Check if background should change (only at 100 score)
@@ -413,7 +402,6 @@
             currentChallenge = null;
             lastObstaclePosition = 'bottom';
             patternBroken = false;
-            currentBg = 'NBG.png';
             backgroundChanged = false;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
