@@ -322,144 +322,12 @@
     </div>
 
     <script>
-        // Audio System with Careful Error Handling
-        const AudioSystem = {
-            // Sound effects
-            sounds: {
-                jump: {
-                    src: 'https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3',
-                    audio: null,
-                    volume: 0.5
-                },
-                death: {
-                    src: 'https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3',
-                    audio: null,
-                    volume: 0.5
-                }
-            },
-            
-            // Background music
-            bgMusic: {
-                src: 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3',
-                audio: null,
-                volume: 0.3
-            },
-            
-            // Initialize audio system
-            init: function() {
-                try {
-                    // Create audio context
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    
-                    // Initialize sounds
-                    this.initSounds();
-                    
-                    // Setup audio start on user interaction
-                    this.setupAudioStart();
-                } catch (e) {
-                    console.error("Audio initialization error:", e);
-                }
-            },
-            
-            // Initialize all sounds
-            initSounds: function() {
-                // Initialize background music
-                this.bgMusic.audio = new Audio(this.bgMusic.src);
-                this.bgMusic.audio.loop = true;
-                this.bgMusic.audio.volume = this.bgMusic.volume;
-                this.bgMusic.audio.preload = 'auto';
-                
-                // Initialize sound effects
-                for (const [name, sound] of Object.entries(this.sounds)) {
-                    sound.audio = new Audio(sound.src);
-                    sound.audio.volume = sound.volume;
-                    sound.audio.preload = 'auto';
-                }
-            },
-            
-            // Setup audio to start on user interaction
-            setupAudioStart: function() {
-                const startAudio = () => {
-                    try {
-                        // Resume audio context if suspended
-                        if (this.audioContext.state === 'suspended') {
-                            this.audioContext.resume().then(() => {
-                                console.log("Audio context resumed");
-                            }).catch(e => {
-                                console.error("Audio context resume failed:", e);
-                            });
-                        }
-                        
-                        // Start background music
-                        this.playMusic();
-                        
-                        // Remove event listeners after first interaction
-                        document.removeEventListener('click', startAudio);
-                        document.removeEventListener('keydown', startAudio);
-                        document.removeEventListener('touchstart', startAudio);
-                    } catch (e) {
-                        console.error("Audio start error:", e);
-                    }
-                };
-                
-                // Set up event listeners for first interaction
-                document.addEventListener('click', startAudio, { once: true });
-                document.addEventListener('keydown', startAudio, { once: true });
-                document.addEventListener('touchstart', startAudio, { once: true });
-            },
-            
-            // Play background music
-            playMusic: function() {
-                try {
-                    this.bgMusic.audio.currentTime = 0;
-                    this.bgMusic.audio.play().catch(e => {
-                        console.error("Background music play failed:", e);
-                    });
-                } catch (e) {
-                    console.error("Play music error:", e);
-                }
-            },
-            
-            // Play sound effect
-            play: function(soundName) {
-                try {
-                    const sound = this.sounds[soundName];
-                    if (!sound || !sound.audio) return;
-                    
-                    // Create a new audio instance each time to allow overlapping sounds
-                    const audio = new Audio(sound.src);
-                    audio.volume = sound.volume;
-                    
-                    audio.play().catch(e => {
-                        console.error(`Sound ${soundName} play failed:`, e);
-                        // Fallback to original sound if clone fails
-                        sound.audio.currentTime = 0;
-                        sound.audio.play().catch(e => {
-                            console.error(`Fallback sound ${soundName} play failed:`, e);
-                        });
-                    });
-                } catch (e) {
-                    console.error(`Sound ${soundName} play error:`, e);
-                }
-            },
-            
-            // Stop background music
-            stopMusic: function() {
-                try {
-                    if (this.bgMusic.audio) {
-                        this.bgMusic.audio.pause();
-                        this.bgMusic.audio.currentTime = 0;
-                    }
-                } catch (e) {
-                    console.error("Stop music error:", e);
-                }
-            }
+        // Simple Audio System for Jump Sound Only
+        const playJumpSound = () => {
+            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
+            jumpSound.volume = 0.5;
+            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
         };
-
-        // Initialize audio system when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            AudioSystem.init();
-        });
 
         // Game elements
         const player = document.getElementById('player');
@@ -566,9 +434,6 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
-            
-            // Restart audio system
-            AudioSystem.init();
         }
         
         // Calculate current speed
@@ -624,9 +489,6 @@
                 ) {
                     setTimeout(() => {
                         if (!isShowingChallenge) {
-                            // Play death sound
-                            AudioSystem.play('death');
-                            
                             // Only show challenge if score >= 100
                             if (score >= 100) {
                                 gameOver();
@@ -708,7 +570,7 @@
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
             
             // Play jump sound
-            AudioSystem.play('jump');
+            playJumpSound();
         }
         
         // Increase score
@@ -726,9 +588,6 @@
             
             finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
-            
-            // Stop background music
-            AudioSystem.stopMusic();
         }
         
         // Show random challenge
@@ -1014,9 +873,6 @@
             gameIsRunning = true;
             lastObstacleTime = Date.now();
             gameLoop();
-            
-            // Restart background music
-            AudioSystem.init();
         }
         
         // Event listeners
@@ -1067,4 +923,4 @@
         initGameSize();
     </script>
 </body>
-    </html>
+</html>
