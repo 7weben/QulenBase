@@ -91,11 +91,6 @@
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
         }
         
-        .rocket {
-            background: #FF9900;
-            clip-path: polygon(30% 0%, 70% 0%, 70% 70%, 100% 70%, 50% 100%, 0% 70%, 30% 70%);
-        }
-        
         #top-floor, #bottom-floor {
             position: absolute;
             width: 100%;
@@ -125,6 +120,22 @@
                 0 0 10px rgba(255, 215, 0, 0.5);
             font-weight: bold;
             text-align: center;
+        }
+        
+        #high-score {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #FFD700;
+            z-index: 20;
+            text-shadow: 
+                1px 1px 2px rgba(0, 0, 0, 0.7),
+                0 0 5px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+            text-align: center;
+            display: none;
         }
         
         #game-over {
@@ -184,22 +195,6 @@
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
-        
-        #high-score {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
-            color: #FFD700;
-            z-index: 20;
-            text-shadow: 
-                1px 1px 2px rgba(0, 0, 0, 0.7),
-                0 0 5px rgba(255, 215, 0, 0.5);
-            font-weight: bold;
-            text-align: center;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -209,8 +204,8 @@
             <div id="top-floor"></div>
             <div id="bottom-floor"></div>
             <div id="player"></div>
-            <div id="high-score">High Score: 0</div>
             <div id="score-display">0</div>
+            <div id="high-score">High Score: 0</div>
             <div id="game-over">
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
@@ -253,7 +248,6 @@
         let currentSpeedMultiplier = 1;
         let lastObstaclePosition = 'bottom';
         let backgroundChanged = false;
-        let lastObstacleType = 'triangle'; // 'triangle' or 'rocket'
         
         // Initialize game dimensions
         function initGameSize() {
@@ -297,7 +291,6 @@
             scoreDisplay.textContent = "0";
             lastObstaclePosition = 'bottom';
             backgroundChanged = false;
-            lastObstacleType = 'triangle';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             newHighScoreDisplay.style.display = 'none';
@@ -404,16 +397,9 @@
             }
         }
         
-        // Create a group of obstacles (2-3 triangles or 1 rocket in middle)
+        // Create a group of obstacles (only spikes now)
         function createObstacleGroup() {
-            // 20% chance to spawn a rocket instead of triangles
-            if (Math.random() < 0.2 && lastObstacleType !== 'rocket') {
-                createRocket();
-                lastObstacleType = 'rocket';
-            } else {
-                createTriangleGroup();
-                lastObstacleType = 'triangle';
-            }
+            createTriangleGroup();
         }
         
         function createTriangleGroup() {
@@ -450,38 +436,6 @@
                     y: y
                 });
             }
-            
-            obstacleGroups.push(group);
-        }
-        
-        function createRocket() {
-            const group = {
-                obstacles: [],
-                scored: false
-            };
-            
-            const obstacle = document.createElement('div');
-            obstacle.className = 'obstacle rocket';
-            
-            const width = 40;
-            const height = 60;
-            // Fixed position in the middle of the play area
-            const middleY = (gameHeight / 2) - (height / 2);
-            const x = gameWidth;
-            
-            obstacle.style.left = x + 'px';
-            obstacle.style.width = width + 'px';
-            obstacle.style.height = height + 'px';
-            obstacle.style.top = middleY + 'px';
-            
-            gameContainer.appendChild(obstacle);
-            
-            group.obstacles.push({
-                element: obstacle,
-                width: width,
-                height: height,
-                y: middleY
-            });
             
             obstacleGroups.push(group);
         }
@@ -589,7 +543,9 @@
             }
         });
         
-        restartBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', () => {
+            startGame();
+        });
         
         // Handle window resize and orientation change
         window.addEventListener('resize', initGameSize);
