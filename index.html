@@ -216,13 +216,6 @@
     </div>
 
     <script>
-        // Simple Jump Sound Only
-        const playJumpSound = () => {
-            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
-            jumpSound.volume = 0.5;
-            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
-        };
-
         // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
@@ -284,6 +277,22 @@
         
         // Initialize game
         function init() {
+            // Clear any existing obstacles
+            document.querySelectorAll('.obstacle').forEach(obs => {
+                if (obs.parentNode) {
+                    gameContainer.removeChild(obs);
+                }
+            });
+            
+            // Clear any score pop effects
+            document.querySelectorAll('.score-pop').forEach(pop => {
+                if (pop.parentNode) {
+                    gameContainer.removeChild(pop);
+                }
+            });
+            
+            // Reset game state
+            obstacleGroups = [];
             initGameSize();
             isOnTopFloor = false;
             score = 0;
@@ -295,17 +304,8 @@
             gameBg.style.opacity = 1;
             newHighScoreDisplay.style.display = 'none';
             
-            // Clear all obstacles
-            obstacleGroups.forEach(group => {
-                group.obstacles.forEach(obstacle => {
-                    if (obstacle.element.parentNode) {
-                        gameContainer.removeChild(obstacle.element);
-                    }
-                });
-            });
-            obstacleGroups = [];
-            
             // Reset player position
+            playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
@@ -320,6 +320,11 @@
         
         // Start game
         function startGame() {
+            // Cancel any existing animation frame
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
             init();
             gameIsRunning = true;
             lastObstacleTime = Date.now();
@@ -473,6 +478,13 @@
             playJumpSound();
         }
         
+        // Simple Jump Sound Only
+        function playJumpSound() {
+            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
+            jumpSound.volume = 0.5;
+            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
+        }
+        
         // Increase score (1 point per group passed)
         function increaseScore() {
             score++;
@@ -519,7 +531,7 @@
                 e.preventDefault();
                 if (!gameIsRunning && gameOverScreen.style.display !== 'block') {
                     startGame();
-                } else {
+                } else if (gameIsRunning) {
                     switchFloor();
                 }
             }
@@ -543,7 +555,9 @@
             }
         });
         
-        restartBtn.addEventListener('click', () => {
+        // Restart button with proper cleanup
+        restartBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent this from triggering the gameContainer click
             startGame();
         });
         
