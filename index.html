@@ -44,7 +44,7 @@
         @media (max-width: 768px), (orientation: portrait) {
             #game-container {
                 width: 90vw;
-                height: calc(90vw * 1.333);
+                height: calc(90vw * 1.333); /* 3:4 ratio */
                 max-height: 90vh;
             }
         }
@@ -53,7 +53,7 @@
         @media (min-width: 769px), (orientation: landscape) {
             #game-container {
                 height: 80vh;
-                width: calc(80vh * 1.5);
+                width: calc(80vh * 1.5); /* 3:2 ratio */
                 max-width: 90vw;
             }
         }
@@ -84,11 +84,15 @@
         .obstacle {
             position: absolute;
             z-index: 5;
+            background: #FF5555;
         }
         
-        .spike {
-            background: #FF5555;
+        .spike.horizontal {
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        
+        .spike.vertical {
+            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
         }
         
         #top-floor, #bottom-floor {
@@ -122,22 +126,6 @@
             text-align: center;
         }
         
-        #high-score {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
-            color: #FFD700;
-            z-index: 20;
-            text-shadow: 
-                1px 1px 2px rgba(0, 0, 0, 0.7),
-                0 0 5px rgba(255, 215, 0, 0.5);
-            font-weight: bold;
-            text-align: center;
-            display: none;
-        }
-        
         #game-over {
             position: absolute;
             top: 50%;
@@ -164,34 +152,118 @@
             margin-top: 15px;
         }
         
-        .score-pop {
+        /* Challenge Popup Styles */
+        #challenge-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #challenge-popup {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        #close-challenge {
             position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        #challenge-popup h2 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        /* Tic Tac Toe Styles */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin: 15px auto;
+            width: 150px;
+        }
+        
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Word Guess Styles */
+        #word-guess {
+            display: none;
+        }
+        
+        #word-clue {
             color: #FFD700;
-            z-index: 25;
-            animation: pop 0.5s ease-out forwards;
-            pointer-events: none;
-            text-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 0.7),
-                0 0 10px rgba(255, 215, 0, 0.5);
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        
+        #word-display {
+            font-size: 24px;
+            letter-spacing: 5px;
+            margin: 15px 0;
+            color: white;
+        }
+        
+        #word-input {
+            padding: 8px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        #submit-guess {
+            background: #00FF00;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #challenge-result {
+            color: white;
+            margin: 10px 0;
+            min-height: 20px;
+        }
+        
+        #timer {
+            color: #FF5555;
+            font-size: 18px;
             font-weight: bold;
+            margin: 10px 0;
         }
         
-        @keyframes pop {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 0; }
-        }
-        
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+        #ad-space {
+            background: #333;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -203,27 +275,76 @@
             <div id="bottom-floor"></div>
             <div id="player"></div>
             <div id="score-display">0</div>
-            <div id="high-score">High Score: 0</div>
             <div id="game-over">
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
-                <p id="new-high-score" style="color: gold; display: none;">New High Score!</p>
                 <button id="restart-btn">Play Again</button>
             </div>
         </div>
     </div>
 
+    <!-- Challenge Popup -->
+    <div id="challenge-container">
+        <div id="challenge-popup">
+            <button id="close-challenge">✕</button>
+            <h2>Continue Challenge!</h2>
+            
+            <!-- Tic Tac Toe Game -->
+            <div id="tic-tac-toe">
+                <p id="challenge-result">Win in 10 seconds to continue!</p>
+                <div id="timer">Time left: 10</div>
+                <div class="board" id="board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
+            </div>
+            
+            <!-- Word Guess Game -->
+            <div id="word-guess">
+                <p id="challenge-result-word">Guess the word in 10 seconds!</p>
+                <div id="word-timer">Time left: 10</div>
+                <p id="word-clue">Clue: </p>
+                <p id="word-display">_ _ _ _ _</p>
+                <input type="text" id="word-input" placeholder="Your guess">
+                <button id="submit-guess">Submit</button>
+            </div>
+            
+            <div id="ad-space">
+                Advertisement Space
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Simple Jump Sound Only
+        const playJumpSound = () => {
+            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
+            jumpSound.volume = 0.5;
+            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
+        };
+
         // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
         const gameBg = document.getElementById('game-bg');
         const scoreDisplay = document.getElementById('score-display');
-        const highScoreDisplay = document.getElementById('high-score');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
-        const newHighScoreDisplay = document.getElementById('new-high-score');
+        
+        // Challenge elements
+        const challengeContainer = document.getElementById('challenge-container');
+        const challengePopup = document.getElementById('challenge-popup');
+        const closeChallenge = document.getElementById('close-challenge');
+        const ticTacToeGame = document.getElementById('tic-tac-toe');
+        const wordGuessGame = document.getElementById('word-guess');
         
         // Game variables
         let gameHeight, gameWidth;
@@ -231,13 +352,15 @@
         let isOnTopFloor = false;
         let gameIsRunning = false;
         let score = 0;
-        let highScore = localStorage.getItem('precisionDashHighScore') || 0;
-        let obstacleGroups = [];
+        let obstacles = [];
         let lastObstacleTime = 0;
         let animationId;
         const baseSpeed = 6;
         let currentSpeedMultiplier = 1;
+        let isShowingChallenge = false;
+        let currentChallenge = null;
         let lastObstaclePosition = 'bottom';
+        let patternBroken = false;
         let backgroundChanged = false;
         
         // Initialize game dimensions
@@ -247,10 +370,6 @@
             playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
-            
-            // Update high score display
-            highScoreDisplay.textContent = `High Score: ${highScore}`;
-            highScoreDisplay.style.display = 'block';
         }
         
         // Change background to DBG.png (only once at 100 score)
@@ -275,42 +394,34 @@
         
         // Initialize game
         function init() {
-            // Clear all obstacles first
-            const obstacles = document.querySelectorAll('.obstacle');
-            obstacles.forEach(obs => {
-                if (obs.parentNode === gameContainer) {
-                    gameContainer.removeChild(obs);
-                }
-            });
-
-            // Clear score pop effects
-            const scorePops = document.querySelectorAll('.score-pop');
-            scorePops.forEach(pop => {
-                if (pop.parentNode === gameContainer) {
-                    gameContainer.removeChild(pop);
-                }
-            });
-
-            // Reset game state
-            obstacleGroups = [];
             initGameSize();
             isOnTopFloor = false;
             score = 0;
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
+            currentChallenge = null;
             lastObstaclePosition = 'bottom';
+            patternBroken = false;
             backgroundChanged = false;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
-            newHighScoreDisplay.style.display = 'none';
+            
+            // Clear all obstacles
+            obstacles.forEach(obstacle => {
+                if (obstacle.element.parentNode) {
+                    gameContainer.removeChild(obstacle.element);
+                }
+            });
+            obstacles = [];
             
             // Reset player position
-            playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
             // Hide game over screen
             gameOverScreen.style.display = 'none';
+            challengeContainer.style.display = 'none';
+            isShowingChallenge = false;
         }
         
         // Calculate current speed
@@ -320,15 +431,7 @@
         
         // Start game
         function startGame() {
-            // Cancel any existing game loop
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-            
-            // Reset game state
             init();
-            
-            // Start new game
             gameIsRunning = true;
             lastObstacleTime = Date.now();
             gameLoop();
@@ -350,124 +453,101 @@
             
             // Generate new obstacles
             if (currentTime - lastObstacleTime > 1000) {
-                createObstacleGroup();
+                createObstacle();
                 lastObstacleTime = currentTime;
             }
             
             // Move obstacles and check for collisions
-            for (let i = obstacleGroups.length - 1; i >= 0; i--) {
-                const group = obstacleGroups[i];
-                let allPassed = true;
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                const obstacleX = parseFloat(obstacle.element.style.left);
+                const obstacleY = parseFloat(obstacle.element.style.top);
+                const obstacleWidth = parseFloat(obstacle.element.style.width);
+                const obstacleHeight = parseFloat(obstacle.element.style.height);
                 
-                for (let j = group.obstacles.length - 1; j >= 0; j--) {
-                    const obstacle = group.obstacles[j];
-                    const obstacleX = parseFloat(obstacle.element.style.left);
-                    const obstacleY = parseFloat(obstacle.element.style.top);
-                    const obstacleWidth = parseFloat(obstacle.element.style.width);
-                    const obstacleHeight = parseFloat(obstacle.element.style.height);
-                    
-                    // Move obstacle at current speed
-                    obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
-                    
-                    // Check if any obstacle in group is still on screen
-                    if (obstacleX + obstacleWidth > 0) {
-                        allPassed = false;
-                    }
-                    
-                    // Check for collision with player
-                    if (
-                        playerX < obstacleX + obstacleWidth &&
-                        playerX + 45 > obstacleX &&
-                        playerY < obstacleY + obstacleHeight &&
-                        playerY + 45 > obstacleY
-                    ) {
-                        gameOver();
-                        return;
-                    }
+                // Move obstacle at current speed
+                obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
+                
+                // Check for collision with player
+                if (
+                    playerX < obstacleX + obstacleWidth &&
+                    playerX + 45 > obstacleX &&
+                    playerY < obstacleY + obstacleHeight &&
+                    playerY + 45 > obstacleY
+                ) {
+                    setTimeout(() => {
+                        if (!isShowingChallenge) {
+                            // Only show challenge if score >= 100
+                            if (score >= 100) {
+                                gameOver();
+                                showRandomChallenge();
+                            } else {
+                                gameOver();
+                            }
+                        }
+                    }, 100);
                 }
                 
-                // If all obstacles in group passed the screen
-                if (allPassed && !group.scored) {
-                    group.scored = true;
+                // Remove obstacles that are off screen
+                if (obstacleX < -100) {
+                    gameContainer.removeChild(obstacle.element);
+                    obstacles.splice(i, 1);
                     increaseScore();
                     checkBackgroundChange();
                 }
-                
-                // Remove group if all obstacles are off screen
-                if (allPassed) {
-                    group.obstacles.forEach(obstacle => {
-                        if (obstacle.element.parentNode) {
-                            gameContainer.removeChild(obstacle.element);
-                        }
-                    });
-                    obstacleGroups.splice(i, 1);
-                }
             }
-        }
-        
-        // Create a group of obstacles (only spikes now)
-        function createObstacleGroup() {
-            createTriangleGroup();
-        }
-        
-        function createTriangleGroup() {
-            const isTopObstacle = lastObstaclePosition === 'bottom';
-            lastObstaclePosition = isTopObstacle ? 'top' : 'bottom';
-            
-            const obstacleCount = Math.floor(Math.random() * 2) + 2; // 2-3 obstacles
-            const gap = gameWidth / (obstacleCount + 1);
-            const group = {
-                obstacles: [],
-                scored: false
-            };
-            
-            for (let i = 0; i < obstacleCount; i++) {
-                const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle spike';
-                
-                const width = 30;
-                const height = 30;
-                const y = isTopObstacle ? 20 : gameHeight - height - 20;
-                const x = gameWidth + (i * gap);
-                
-                obstacle.style.left = x + 'px';
-                obstacle.style.width = width + 'px';
-                obstacle.style.height = height + 'px';
-                obstacle.style.top = y + 'px';
-                
-                gameContainer.appendChild(obstacle);
-                
-                group.obstacles.push({
-                    element: obstacle,
-                    width: width,
-                    height: height,
-                    y: y
-                });
-            }
-            
-            obstacleGroups.push(group);
-        }
-        
-        // Create score pop effect
-        function createScorePop() {
-            const pop = document.createElement('div');
-            pop.className = 'score-pop';
-            pop.textContent = '+1';
-            pop.style.left = `${playerX + 22}px`;
-            pop.style.top = `${playerY - 20}px`;
-            gameContainer.appendChild(pop);
-            
-            // Remove after animation completes
-            setTimeout(() => {
-                if (pop.parentNode) {
-                    gameContainer.removeChild(pop);
-                }
-            }, 500);
         }
         
         // Render game
         function render() {
             player.style.top = playerY + 'px';
+        }
+        
+        // Create a new obstacle
+        function createObstacle() {
+            let isTopObstacle;
+            
+            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
+                isTopObstacle = lastObstaclePosition === 'top';
+                patternBroken = true;
+            } else {
+                isTopObstacle = lastObstaclePosition === 'bottom';
+                patternBroken = false;
+            }
+            
+            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
+            
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
+            
+            let width = 30, height = 30;
+            let y;
+            
+            if (isTopObstacle) {
+                if (isHorizontal) {
+                    y = 20;
+                } else {
+                    y = 20 + Math.random() * (gameHeight - 100);
+                }
+                lastObstaclePosition = 'top';
+            } else {
+                y = gameHeight - height - 20;
+                lastObstaclePosition = 'bottom';
+            }
+            
+            obstacle.style.left = gameWidth + 'px';
+            obstacle.style.width = width + 'px';
+            obstacle.style.height = height + 'px';
+            obstacle.style.top = y + 'px';
+            
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                width: width,
+                height: height,
+                y: y
+            });
         }
         
         // Switch between top and bottom floor
@@ -481,40 +561,12 @@
             playJumpSound();
         }
         
-        // Simple Jump Sound Only
-        function playJumpSound() {
-            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
-            jumpSound.volume = 0.5;
-            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
-        }
-        
-        // Increase score (1 point per group passed)
+        // Increase score
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
             // Set speed multiplier to increase by 0.025x per score
             currentSpeedMultiplier = 1 + (score * 0.025);
-            
-            // Create score pop effect
-            createScorePop();
-        }
-        
-        // Screen shake effect
-        function screenShake() {
-            gameContainer.classList.add('shake');
-            setTimeout(() => {
-                gameContainer.classList.remove('shake');
-            }, 500);
-        }
-        
-        // Update high score
-        function updateHighScore() {
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('precisionDashHighScore', highScore);
-                newHighScoreDisplay.style.display = 'block';
-            }
-            highScoreDisplay.textContent = `High Score: ${highScore}`;
         }
         
         // End the game
@@ -523,9 +575,292 @@
             cancelAnimationFrame(animationId);
             
             finalScoreDisplay.textContent = score;
-            updateHighScore();
-            screenShake();
             gameOverScreen.style.display = 'block';
+        }
+        
+        // Show random challenge
+        function showRandomChallenge() {
+            isShowingChallenge = true;
+            gameOverScreen.style.display = 'none';
+            challengeContainer.style.display = 'flex';
+            
+            if (Math.random() > 0.5) {
+                currentChallenge = 'tic-tac-toe';
+                ticTacToeGame.style.display = 'block';
+                wordGuessGame.style.display = 'none';
+                startTicTacToe();
+            } else {
+                currentChallenge = 'word-guess';
+                ticTacToeGame.style.display = 'none';
+                wordGuessGame.style.display = 'block';
+                startWordGuess();
+            }
+        }
+        
+        /* ===== TIC TAC TOE GAME ===== */
+        let currentPlayer = 'X';
+        let gameBoard = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let timer = 10;
+        let timerInterval;
+        
+        function startTicTacToe() {
+            resetTicTacToe();
+            startTimer();
+        }
+        
+        function resetTicTacToe() {
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            timer = 10;
+            document.getElementById('timer').textContent = "Time left: 10";
+            document.getElementById('challenge-result').textContent = "Win in 10 seconds to continue!";
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+            });
+        }
+        
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = `Time left: ${timer}`;
+                
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
+                    gameActive = false;
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        gameOverScreen.style.display = 'block';
+                        isShowingChallenge = false;
+                    }, 1500);
+                }
+            }, 1000);
+        }
+        
+        function handleCellClick(e) {
+            if (!gameActive || currentPlayer !== 'X') return;
+            
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+            
+            if (gameBoard[index] !== '') return;
+            
+            gameBoard[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            
+            if (checkWinner('X')) {
+                clearInterval(timerInterval);
+                document.getElementById('challenge-result').textContent = `You won! Continuing your run...`;
+                gameActive = false;
+                
+                setTimeout(() => {
+                    challengeContainer.style.display = 'none';
+                    continueAfterChallenge();
+                }, 1500);
+                return;
+            }
+            
+            if (isBoardFull()) {
+                clearInterval(timerInterval);
+                document.getElementById('challenge-result').textContent = "Tie game! Restarting challenge...";
+                setTimeout(() => {
+                    resetTicTacToe();
+                    startTimer();
+                }, 1000);
+                return;
+            }
+            
+            currentPlayer = 'O';
+            document.getElementById('challenge-result').textContent = "Computer's turn...";
+            
+            setTimeout(() => {
+                if (gameActive) {
+                    makeAIMove();
+                    
+                    if (checkWinner('O')) {
+                        clearInterval(timerInterval);
+                        document.getElementById('challenge-result').textContent = `Computer won! Game over.`;
+                        gameActive = false;
+                        
+                        setTimeout(() => {
+                            challengeContainer.style.display = 'none';
+                            gameOverScreen.style.display = 'block';
+                            isShowingChallenge = false;
+                        }, 1500);
+                        return;
+                    }
+                    
+                    if (isBoardFull()) {
+                        clearInterval(timerInterval);
+                        document.getElementById('challenge-result').textContent = "Tie game! Restarting challenge...";
+                        setTimeout(() => {
+                            resetTicTacToe();
+                            startTimer();
+                        }, 1000);
+                        return;
+                    }
+                    
+                    currentPlayer = 'X';
+                    document.getElementById('challenge-result').textContent = "Your turn (X)";
+                }
+            }, 500);
+        }
+        
+        function makeAIMove() {
+            const availableSpots = gameBoard.map((spot, index) => spot === '' ? index : null).filter(val => val !== null);
+            
+            // Check for winning move
+            for (let i = 0; i < availableSpots.length; i++) {
+                const index = availableSpots[i];
+                gameBoard[index] = 'O';
+                if (checkWinner('O')) {
+                    document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    return;
+                }
+                gameBoard[index] = '';
+            }
+            
+            // Block player's winning move
+            for (let i = 0; i < availableSpots.length; i++) {
+                const index = availableSpots[i];
+                gameBoard[index] = 'X';
+                if (checkWinner('X')) {
+                    gameBoard[index] = 'O';
+                    document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    return;
+                }
+                gameBoard[index] = '';
+            }
+            
+            // Take center if available
+            if (gameBoard[4] === '') {
+                gameBoard[4] = 'O';
+                document.querySelector('.cell[data-index="4"]').textContent = 'O';
+                return;
+            }
+            
+            // Take a corner if available
+            const corners = [0, 2, 6, 8];
+            const availableCorners = corners.filter(index => gameBoard[index] === '');
+            if (availableCorners.length > 0) {
+                const randomCorner = availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                gameBoard[randomCorner] = 'O';
+                document.querySelector(`.cell[data-index="${randomCorner}"]`).textContent = 'O';
+                return;
+            }
+            
+            // Take any available spot
+            const randomSpot = availableSpots[Math.floor(Math.random() * availableSpots.length)];
+            gameBoard[randomSpot] = 'O';
+            document.querySelector(`.cell[data-index="${randomSpot}"]`).textContent = 'O';
+        }
+        
+        function checkWinner(player) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (gameBoard[a] === player && gameBoard[b] === player && gameBoard[c] === player) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function isBoardFull() {
+            return gameBoard.every(cell => cell !== '');
+        }
+        
+        /* ===== WORD GUESS GAME ===== */
+        const wordList = [
+            { word: "apple", clue: "A common fruit that grows on trees" },
+            { word: "banana", clue: "Yellow curved tropical fruit" },
+            { word: "orange", clue: "Citrus fruit that's also a color" },
+            { word: "guitar", clue: "Musical instrument with strings" },
+            { word: "planet", clue: "Celestial body that orbits a star" },
+            { word: "dragon", clue: "Mythical fire-breathing creature" },
+            { word: "puzzle", clue: "Game that tests your problem-solving skills" },
+            { word: "rocket", clue: "Vehicle that travels to space" },
+            { word: "jungle", clue: "Dense tropical forest" },
+            { word: "whisper", clue: "To speak very quietly" }
+        ];
+        
+        let currentWord = '';
+        let hiddenWord = [];
+        let wordTimer = 10;
+        let wordTimerInterval;
+        
+        function startWordGuess() {
+            resetWordGuess();
+            startWordTimer();
+            if (window.innerWidth > 768) {
+                document.getElementById('word-input').focus();
+            }
+        }
+        
+        function resetWordGuess() {
+            const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+            currentWord = randomWord.word.toLowerCase();
+            hiddenWord = Array(currentWord.length).fill('_');
+            wordTimer = 10;
+            document.getElementById('word-timer').textContent = "Time left: 10";
+            document.getElementById('challenge-result-word').textContent = "Guess the word in 10 seconds!";
+            document.getElementById('word-clue').textContent = `Clue: ${randomWord.clue}`;
+            document.getElementById('word-display').textContent = hiddenWord.join(' ');
+            document.getElementById('word-input').value = '';
+        }
+        
+        function startWordTimer() {
+            clearInterval(wordTimerInterval);
+            wordTimerInterval = setInterval(() => {
+                wordTimer--;
+                document.getElementById('word-timer').textContent = `Time left: ${wordTimer}`;
+                
+                if (wordTimer <= 0) {
+                    clearInterval(wordTimerInterval);
+                    document.getElementById('challenge-result-word').textContent = "Time's up! Game over.";
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        gameOverScreen.style.display = 'block';
+                        isShowingChallenge = false;
+                    }, 1500);
+                }
+            }, 1000);
+        }
+        
+        function checkWordGuess() {
+            const guess = document.getElementById('word-input').value.toLowerCase();
+            
+            if (guess === currentWord) {
+                clearInterval(wordTimerInterval);
+                document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
+                
+                setTimeout(() => {
+                    challengeContainer.style.display = 'none';
+                    continueAfterChallenge();
+                }, 1500);
+            } else {
+                document.getElementById('challenge-result-word').textContent = "Wrong guess! Try again.";
+                document.getElementById('word-input').value = '';
+            }
+        }
+        
+        function continueAfterChallenge() {
+            isShowingChallenge = false;
+            currentChallenge = null;
+            gameIsRunning = true;
+            lastObstacleTime = Date.now();
+            gameLoop();
         }
         
         // Event listeners
@@ -534,7 +869,7 @@
                 e.preventDefault();
                 if (!gameIsRunning && gameOverScreen.style.display !== 'block') {
                     startGame();
-                } else if (gameIsRunning) {
+                } else {
                     switchFloor();
                 }
             }
@@ -548,21 +883,24 @@
             }
         });
         
-        // Touch support
-        gameContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (gameIsRunning) {
-                switchFloor();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
-            }
+        restartBtn.addEventListener('click', startGame);
+        closeChallenge.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            clearInterval(wordTimerInterval);
+            challengeContainer.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            isShowingChallenge = false;
         });
         
-        // Restart button with proper cleanup
-        restartBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            startGame();
+        // Tic Tac Toe event listeners
+        document.getElementById('board').addEventListener('click', handleCellClick);
+        
+        // Word Guess event listeners
+        document.getElementById('submit-guess').addEventListener('click', checkWordGuess);
+        document.getElementById('word-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkWordGuess();
+            }
         });
         
         // Handle window resize and orientation change
