@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Precision Dash</title>
+    <title>Precision Dash Pro</title>
     <!-- Favicon Links -->
     <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
     <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
@@ -30,6 +30,8 @@
             align-items: center;
             height: 100vh;
             width: 100vw;
+            transform: translate(0, 0);
+            transition: transform 0.1s;
         }
         
         #game-container {
@@ -95,6 +97,14 @@
             clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
         }
         
+        .spike.reverse {
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+        }
+        
+        .spike-block {
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+        }
+        
         #top-floor, #bottom-floor {
             position: absolute;
             width: 100%;
@@ -126,6 +136,20 @@
             text-align: center;
         }
         
+        #score-popup {
+            position: absolute;
+            font-size: 24px;
+            color: #FFD700;
+            z-index: 25;
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 0.7),
+                0 0 10px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+        
         #game-over {
             position: absolute;
             top: 50%;
@@ -150,6 +174,37 @@
             border-radius: 5px;
             cursor: pointer;
             margin-top: 15px;
+        }
+        
+        /* Power Up Elements */
+        .power-up {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            z-index: 8;
+            animation: float 2s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        #power-up-indicator {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #00FF00;
+            z-index: 20;
+            text-shadow: 
+                1px 1px 2px rgba(0, 0, 0, 0.7),
+                0 0 5px rgba(0, 255, 0, 0.5);
+            font-weight: bold;
+            text-align: center;
+            display: none;
         }
         
         /* Challenge Popup Styles */
@@ -265,6 +320,54 @@
             color: #aaa;
             font-size: 14px;
         }
+        
+        /* Combo Meter */
+        #combo-meter {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #FF69B4;
+            z-index: 20;
+            text-shadow: 
+                1px 1px 2px rgba(0, 0, 0, 0.7),
+                0 0 5px rgba(255, 105, 180, 0.5);
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+        
+        /* Mobile Controls */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 40;
+            display: none;
+        }
+        
+        .mobile-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            user-select: none;
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body>
@@ -275,10 +378,19 @@
             <div id="bottom-floor"></div>
             <div id="player"></div>
             <div id="score-display">0</div>
+            <div id="score-popup">+1</div>
+            <div id="power-up-indicator"></div>
+            <div id="combo-meter"></div>
             <div id="game-over">
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
+                <p>Max Combo: <span id="final-combo">0</span></p>
                 <button id="restart-btn">Play Again</button>
+            </div>
+            
+            <div id="mobile-controls">
+                <div class="mobile-btn" id="jump-btn">↑</div>
+                <div class="mobile-btn" id="restart-mobile-btn">↻</div>
             </div>
         </div>
     </div>
@@ -291,8 +403,8 @@
             
             <!-- Tic Tac Toe Game -->
             <div id="tic-tac-toe">
-                <p id="challenge-result">Win in 10 seconds to continue!</p>
-                <div id="timer">Time left: 10</div>
+                <p id="challenge-result">Win in 15 seconds to continue!</p>
+                <div id="timer">Time left: 15</div>
                 <div class="board" id="board">
                     <div class="cell" data-index="0"></div>
                     <div class="cell" data-index="1"></div>
@@ -308,8 +420,8 @@
             
             <!-- Word Guess Game -->
             <div id="word-guess">
-                <p id="challenge-result-word">Guess the word in 10 seconds!</p>
-                <div id="word-timer">Time left: 10</div>
+                <p id="challenge-result-word">Guess the word in 15 seconds!</p>
+                <div id="word-timer">Time left: 15</div>
                 <p id="word-clue">Clue: </p>
                 <p id="word-display">_ _ _ _ _</p>
                 <input type="text" id="word-input" placeholder="Your guess">
@@ -323,21 +435,42 @@
     </div>
 
     <script>
-        // Simple Jump Sound Only
+        // Sound effects
         const playJumpSound = () => {
             const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
             jumpSound.volume = 0.5;
             jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
         };
 
+        const playPowerUpSound = () => {
+            const powerUpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
+            powerUpSound.volume = 0.5;
+            powerUpSound.play().catch(e => console.log("Power-up sound play failed:", e));
+        };
+
+        const playScoreSound = () => {
+            const scoreSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
+            scoreSound.volume = 0.3;
+            scoreSound.play().catch(e => console.log("Score sound play failed:", e));
+        };
+
         // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
+        const gameWrapper = document.getElementById('game-wrapper');
         const gameBg = document.getElementById('game-bg');
         const scoreDisplay = document.getElementById('score-display');
+        const scorePopup = document.getElementById('score-popup');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
+        const finalComboDisplay = document.getElementById('final-combo');
         const restartBtn = document.getElementById('restart-btn');
+        const powerUpIndicator = document.getElementById('power-up-indicator');
+        const comboMeter = document.getElementById('combo-meter');
+        
+        // Mobile controls
+        const jumpBtn = document.getElementById('jump-btn');
+        const restartMobileBtn = document.getElementById('restart-mobile-btn');
         
         // Challenge elements
         const challengeContainer = document.getElementById('challenge-container');
@@ -353,6 +486,7 @@
         let gameIsRunning = false;
         let score = 0;
         let obstacles = [];
+        let powerUps = [];
         let lastObstacleTime = 0;
         let animationId;
         const baseSpeed = 6;
@@ -360,8 +494,48 @@
         let isShowingChallenge = false;
         let currentChallenge = null;
         let lastObstaclePosition = 'bottom';
-        let patternBroken = false;
         let backgroundChanged = false;
+        let comboCount = 0;
+        let maxCombo = 0;
+        let activePowerUp = null;
+        let powerUpTimer = 0;
+        
+        // Power-up types
+        const POWER_UPS = {
+            SHIELD: {
+                color: '#00FFFF',
+                name: 'Shield',
+                duration: 10000, // 10 seconds
+                effect: function() {
+                    player.style.boxShadow = '0 0 15px 5px #00FFFF';
+                },
+                clear: function() {
+                    player.style.boxShadow = 'none';
+                }
+            },
+            SLOWMO: {
+                color: '#FF00FF',
+                name: 'Slow-Mo',
+                duration: 8000, // 8 seconds
+                effect: function() {
+                    currentSpeedMultiplier *= 0.5;
+                },
+                clear: function() {
+                    currentSpeedMultiplier *= 2;
+                }
+            },
+            SCORE_BOOST: {
+                color: '#FFFF00',
+                name: 'Score Boost',
+                duration: 12000, // 12 seconds
+                effect: function() {
+                    // Score multiplier handled in increaseScore()
+                },
+                clear: function() {
+                    // Nothing to clear
+                }
+            }
+        };
         
         // Initialize game dimensions
         function initGameSize() {
@@ -397,22 +571,33 @@
             initGameSize();
             isOnTopFloor = false;
             score = 0;
+            comboCount = 0;
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
+            comboMeter.style.display = 'none';
             currentChallenge = null;
             lastObstaclePosition = 'bottom';
-            patternBroken = false;
             backgroundChanged = false;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
+            activePowerUp = null;
+            powerUpTimer = 0;
+            player.style.boxShadow = 'none';
             
-            // Clear all obstacles
+            // Clear all obstacles and power-ups
             obstacles.forEach(obstacle => {
                 if (obstacle.element.parentNode) {
                     gameContainer.removeChild(obstacle.element);
                 }
             });
             obstacles = [];
+            
+            powerUps.forEach(powerUp => {
+                if (powerUp.element.parentNode) {
+                    gameContainer.removeChild(powerUp.element);
+                }
+            });
+            powerUps = [];
             
             // Reset player position
             player.style.top = playerY + 'px';
@@ -422,6 +607,7 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
+            powerUpIndicator.style.display = 'none';
         }
         
         // Calculate current speed
@@ -451,10 +637,23 @@
         function update() {
             const currentTime = Date.now();
             
-            // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1000) {
-                createObstacle();
+            // Generate new obstacles in groups
+            if (currentTime - lastObstacleTime > 1500) {
+                createObstacleGroup();
                 lastObstacleTime = currentTime;
+                
+                // Random chance to spawn a power-up (10%)
+                if (Math.random() < 0.1) {
+                    createPowerUp();
+                }
+            }
+            
+            // Update power-up timer
+            if (activePowerUp && powerUpTimer > 0) {
+                powerUpTimer -= 16; // Approximate time per frame
+                if (powerUpTimer <= 0) {
+                    clearPowerUp();
+                }
             }
             
             // Move obstacles and check for collisions
@@ -468,32 +667,66 @@
                 // Move obstacle at current speed
                 obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
                 
-                // Check for collision with player
-                if (
-                    playerX < obstacleX + obstacleWidth &&
-                    playerX + 45 > obstacleX &&
-                    playerY < obstacleY + obstacleHeight &&
-                    playerY + 45 > obstacleY
-                ) {
-                    setTimeout(() => {
-                        if (!isShowingChallenge) {
-                            // Only show challenge if score >= 100
-                            if (score >= 100) {
-                                gameOver();
-                                showRandomChallenge();
-                            } else {
-                                gameOver();
+                // Check for collision with player (unless shield is active)
+                if (!activePowerUp || activePowerUp.type !== 'SHIELD') {
+                    if (
+                        playerX < obstacleX + obstacleWidth &&
+                        playerX + 45 > obstacleX &&
+                        playerY < obstacleY + obstacleHeight &&
+                        playerY + 45 > obstacleY
+                    ) {
+                        setTimeout(() => {
+                            if (!isShowingChallenge) {
+                                // Only show challenge if score >= 100
+                                if (score >= 100) {
+                                    gameOver();
+                                    showRandomChallenge();
+                                } else {
+                                    gameOver();
+                                }
                             }
-                        }
-                    }, 100);
+                        }, 100);
+                    }
                 }
                 
                 // Remove obstacles that are off screen
                 if (obstacleX < -100) {
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
-                    increaseScore();
-                    checkBackgroundChange();
+                    
+                    // Check if we've passed a complete group
+                    if (obstacle.isLastInGroup) {
+                        increaseScore();
+                        checkBackgroundChange();
+                    }
+                }
+            }
+            
+            // Move and check power-ups
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+                const powerUpX = parseFloat(powerUp.element.style.left);
+                const powerUpY = parseFloat(powerUp.element.style.top);
+                
+                // Move power-up at current speed
+                powerUp.element.style.left = (powerUpX - getCurrentSpeed()) + 'px';
+                
+                // Check for collision with player
+                if (
+                    playerX < powerUpX + 30 &&
+                    playerX + 45 > powerUpX &&
+                    playerY < powerUpY + 30 &&
+                    playerY + 45 > powerUpY
+                ) {
+                    activatePowerUp(powerUp.type);
+                    gameContainer.removeChild(powerUp.element);
+                    powerUps.splice(i, 1);
+                }
+                
+                // Remove power-ups that are off screen
+                if (powerUpX < -50) {
+                    gameContainer.removeChild(powerUp.element);
+                    powerUps.splice(i, 1);
                 }
             }
         }
@@ -503,51 +736,169 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a new obstacle
-        function createObstacle() {
-            let isTopObstacle;
+        // Create a group of obstacles (5-7, rarely 9)
+        function createObstacleGroup() {
+            const groupSize = Math.random() < 0.1 ? 9 : Math.random() < 0.7 ? 5 : 7;
+            const isTopObstacle = lastObstaclePosition === 'bottom';
             
-            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
-                isTopObstacle = lastObstaclePosition === 'top';
-                patternBroken = true;
-            } else {
-                isTopObstacle = lastObstaclePosition === 'bottom';
-                patternBroken = false;
-            }
+            // Randomly decide the pattern for this group
+            const patternType = Math.floor(Math.random() * 4);
+            let patternSpacing = 60 + Math.random() * 40;
             
-            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
-            
-            const obstacle = document.createElement('div');
-            obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
-            
-            let width = 30, height = 30;
-            let y;
-            
-            if (isTopObstacle) {
-                if (isHorizontal) {
+            for (let i = 0; i < groupSize; i++) {
+                const obstacle = document.createElement('div');
+                let className = 'obstacle spike ';
+                
+                // Determine obstacle type (70% horizontal, 20% vertical, 10% block)
+                const obstacleType = Math.random();
+                let width, height;
+                
+                if (obstacleType < 0.7) {
+                    className += 'horizontal';
+                    width = 30;
+                    height = 30;
+                } else if (obstacleType < 0.9) {
+                    className += 'vertical';
+                    width = 30;
+                    height = 30;
+                } else {
+                    className += 'spike-block';
+                    width = 30;
+                    height = 30;
+                }
+                
+                // Reverse every other spike for variety
+                if (i % 2 === 0 && className.includes('spike') && !className.includes('spike-block')) {
+                    className += ' reverse';
+                }
+                
+                obstacle.className = className;
+                
+                let y;
+                if (isTopObstacle) {
                     y = 20;
                 } else {
-                    y = 20 + Math.random() * (gameHeight - 100);
+                    y = gameHeight - height - 20;
                 }
-                lastObstaclePosition = 'top';
-            } else {
-                y = gameHeight - height - 20;
-                lastObstaclePosition = 'bottom';
+                
+                // Apply pattern
+                let x;
+                switch (patternType) {
+                    case 0: // Straight line
+                        x = gameWidth + (i * patternSpacing);
+                        break;
+                    case 1: // Zigzag
+                        x = gameWidth + (i * patternSpacing);
+                        if (isTopObstacle) {
+                            y = 20 + (i % 2 === 0 ? 0 : 30);
+                        } else {
+                            y = gameHeight - height - 20 - (i % 2 === 0 ? 0 : 30);
+                        }
+                        break;
+                    case 2: // Stairs
+                        x = gameWidth + (i * patternSpacing);
+                        if (isTopObstacle) {
+                            y = 20 + (i * 10);
+                        } else {
+                            y = gameHeight - height - 20 - (i * 10);
+                        }
+                        break;
+                    case 3: // Random height
+                        x = gameWidth + (i * patternSpacing);
+                        if (isTopObstacle) {
+                            y = 20 + Math.random() * 50;
+                        } else {
+                            y = gameHeight - height - 20 - Math.random() * 50;
+                        }
+                        break;
+                }
+                
+                obstacle.style.left = x + 'px';
+                obstacle.style.width = width + 'px';
+                obstacle.style.height = height + 'px';
+                obstacle.style.top = y + 'px';
+                
+                gameContainer.appendChild(obstacle);
+                
+                obstacles.push({
+                    element: obstacle,
+                    width: width,
+                    height: height,
+                    y: y,
+                    isLastInGroup: i === groupSize - 1,
+                    groupId: Date.now() // Unique ID for this group
+                });
             }
             
-            obstacle.style.left = gameWidth + 'px';
-            obstacle.style.width = width + 'px';
-            obstacle.style.height = height + 'px';
-            obstacle.style.top = y + 'px';
+            lastObstaclePosition = isTopObstacle ? 'top' : 'bottom';
+        }
+        
+        // Create a power-up
+        function createPowerUp() {
+            const powerUpTypes = Object.keys(POWER_UPS);
+            const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+            const powerUp = POWER_UPS[randomType];
             
-            gameContainer.appendChild(obstacle);
+            const element = document.createElement('div');
+            element.className = 'power-up';
+            element.style.backgroundColor = powerUp.color;
+            element.style.left = gameWidth + 'px';
             
-            obstacles.push({
-                element: obstacle,
-                width: width,
-                height: height,
+            // Position randomly between floors
+            const y = 50 + Math.random() * (gameHeight - 100);
+            element.style.top = y + 'px';
+            
+            gameContainer.appendChild(element);
+            
+            powerUps.push({
+                element: element,
+                type: randomType,
+                x: gameWidth,
                 y: y
             });
+        }
+        
+        // Activate a power-up
+        function activatePowerUp(type) {
+            // Clear any existing power-up
+            if (activePowerUp) {
+                POWER_UPS[activePowerUp].clear();
+            }
+            
+            activePowerUp = type;
+            powerUpTimer = POWER_UPS[type].duration;
+            POWER_UPS[type].effect();
+            
+            // Show indicator
+            powerUpIndicator.textContent = `${POWER_UPS[type].name} Active!`;
+            powerUpIndicator.style.display = 'block';
+            powerUpIndicator.style.color = POWER_UPS[type].color;
+            
+            // Play sound
+            playPowerUpSound();
+            
+            // Hide indicator after 2 seconds
+            setTimeout(() => {
+                powerUpIndicator.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Clear active power-up
+        function clearPowerUp() {
+            if (activePowerUp) {
+                POWER_UPS[activePowerUp].clear();
+                activePowerUp = null;
+                powerUpTimer = 0;
+                
+                // Show expiration message
+                powerUpIndicator.textContent = 'Power-Up Expired!';
+                powerUpIndicator.style.display = 'block';
+                powerUpIndicator.style.color = '#FF5555';
+                
+                setTimeout(() => {
+                    powerUpIndicator.style.display = 'none';
+                }, 2000);
+            }
         }
         
         // Switch between top and bottom floor
@@ -559,23 +910,85 @@
             
             // Play jump sound
             playJumpSound();
+            
+            // Increase combo
+            comboCount++;
+            if (comboCount > maxCombo) {
+                maxCombo = comboCount;
+            }
+            
+            // Show combo if more than 3
+            if (comboCount >= 3) {
+                comboMeter.textContent = `Combo: ${comboCount}x`;
+                comboMeter.style.display = 'block';
+            } else {
+                comboMeter.style.display = 'none';
+            }
         }
         
-        // Increase score
+        // Increase score (called when passing a complete obstacle group)
         function increaseScore() {
-            score++;
+            // Apply score multiplier if active
+            const multiplier = activePowerUp === 'SCORE_BOOST' ? 2 : 1;
+            
+            score += multiplier;
             scoreDisplay.textContent = score;
-            // Set speed multiplier to increase by 0.025x per score
-            currentSpeedMultiplier = 1 + (score * 0.025);
+            
+            // Show score popup
+            showScorePopup(multiplier);
+            
+            // Play score sound
+            playScoreSound();
+            
+            // Reset combo
+            comboCount = 0;
+            comboMeter.style.display = 'none';
+            
+            // Set speed multiplier to increase by 0.02x per score (slower progression)
+            currentSpeedMultiplier = 1 + (score * 0.02);
         }
         
-        // End the game
+        // Show score popup animation
+        function showScorePopup(multiplier) {
+            scorePopup.textContent = multiplier > 1 ? `+${multiplier} (2x!)` : '+1';
+            scorePopup.style.opacity = '1';
+            scorePopup.style.top = '80px';
+            scorePopup.style.left = `${gameWidth / 2 + 50}px`;
+            
+            setTimeout(() => {
+                scorePopup.style.opacity = '0';
+                scorePopup.style.top = '60px';
+            }, 1000);
+        }
+        
+        // End the game with screen shake
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
             
-            finalScoreDisplay.textContent = score;
-            gameOverScreen.style.display = 'block';
+            // Screen shake effect
+            gameWrapper.style.transform = 'translate(5px, 5px)';
+            
+            setTimeout(() => {
+                gameWrapper.style.transform = 'translate(-5px, -5px)';
+                
+                setTimeout(() => {
+                    gameWrapper.style.transform = 'translate(3px, 3px)';
+                    
+                    setTimeout(() => {
+                        gameWrapper.style.transform = 'translate(-3px, -3px)';
+                        
+                        setTimeout(() => {
+                            gameWrapper.style.transform = 'translate(0, 0)';
+                            
+                            // Show game over screen
+                            finalScoreDisplay.textContent = score;
+                            finalComboDisplay.textContent = maxCombo;
+                            gameOverScreen.style.display = 'block';
+                        }, 50);
+                    }, 50);
+                }, 50);
+            }, 50);
         }
         
         // Show random challenge
@@ -601,7 +1014,7 @@
         let currentPlayer = 'X';
         let gameBoard = ['', '', '', '', '', '', '', '', ''];
         let gameActive = true;
-        let timer = 10;
+        let timer = 15;
         let timerInterval;
         
         function startTicTacToe() {
@@ -613,9 +1026,9 @@
             gameBoard = ['', '', '', '', '', '', '', '', ''];
             gameActive = true;
             currentPlayer = 'X';
-            timer = 10;
-            document.getElementById('timer').textContent = "Time left: 10";
-            document.getElementById('challenge-result').textContent = "Win in 10 seconds to continue!";
+            timer = 15;
+            document.getElementById('timer').textContent = "Time left: 15";
+            document.getElementById('challenge-result').textContent = "Win in 15 seconds to continue!";
             
             document.querySelectorAll('.cell').forEach(cell => {
                 cell.textContent = '';
@@ -791,12 +1204,17 @@
             { word: "puzzle", clue: "Game that tests your problem-solving skills" },
             { word: "rocket", clue: "Vehicle that travels to space" },
             { word: "jungle", clue: "Dense tropical forest" },
-            { word: "whisper", clue: "To speak very quietly" }
+            { word: "whisper", clue: "To speak very quietly" },
+            { word: "shadow", clue: "Dark area produced by blocked light" },
+            { word: "breeze", clue: "Gentle wind" },
+            { word: "camera", clue: "Device for taking photographs" },
+            { word: "diamond", clue: "Precious gemstone made of carbon" },
+            { word: "echo", clue: "Repetition of sound by reflection" }
         ];
         
         let currentWord = '';
         let hiddenWord = [];
-        let wordTimer = 10;
+        let wordTimer = 15;
         let wordTimerInterval;
         
         function startWordGuess() {
@@ -811,12 +1229,24 @@
             const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
             currentWord = randomWord.word.toLowerCase();
             hiddenWord = Array(currentWord.length).fill('_');
-            wordTimer = 10;
-            document.getElementById('word-timer').textContent = "Time left: 10";
-            document.getElementById('challenge-result-word').textContent = "Guess the word in 10 seconds!";
+            wordTimer = 15;
+            document.getElementById('word-timer').textContent = "Time left: 15";
+            document.getElementById('challenge-result-word').textContent = "Guess the word in 15 seconds!";
             document.getElementById('word-clue').textContent = `Clue: ${randomWord.clue}`;
-            document.getElementById('word-display').textContent = hiddenWord.join(' ');
+            updateWordDisplay();
             document.getElementById('word-input').value = '';
+        }
+        
+        function updateWordDisplay() {
+            let display = '';
+            for (let i = 0; i < currentWord.length; i++) {
+                if (hiddenWord[i] !== '_') {
+                    display += hiddenWord[i] + ' ';
+                } else {
+                    display += '_ ';
+                }
+            }
+            document.getElementById('word-display').textContent = display.trim();
         }
         
         function startWordTimer() {
@@ -850,7 +1280,22 @@
                     continueAfterChallenge();
                 }, 1500);
             } else {
-                document.getElementById('challenge-result-word').textContent = "Wrong guess! Try again.";
+                // Check for partial matches
+                let anyMatch = false;
+                for (let i = 0; i < currentWord.length; i++) {
+                    if (guess.includes(currentWord[i])) {
+                        hiddenWord[i] = currentWord[i];
+                        anyMatch = true;
+                    }
+                }
+                
+                if (anyMatch) {
+                    updateWordDisplay();
+                    document.getElementById('challenge-result-word').textContent = "Some letters matched! Try again.";
+                } else {
+                    document.getElementById('challenge-result-word').textContent = "Wrong guess! Try again.";
+                }
+                
                 document.getElementById('word-input').value = '';
             }
         }
@@ -883,6 +1328,15 @@
             }
         });
         
+        // Mobile controls
+        jumpBtn.addEventListener('click', () => {
+            if (gameIsRunning) {
+                switchFloor();
+            }
+        });
+        
+        restartMobileBtn.addEventListener('click', startGame);
+        
         restartBtn.addEventListener('click', startGame);
         closeChallenge.addEventListener('click', () => {
             clearInterval(timerInterval);
@@ -911,4 +1365,4 @@
         initGameSize();
     </script>
 </body>
-</html>
+    </html>
