@@ -44,7 +44,7 @@
         @media (max-width: 768px), (orientation: portrait) {
             #game-container {
                 width: 90vw;
-                height: calc(90vw * 1.333); /* 3:4 ratio */
+                height: calc(90vw * 1.333);
                 max-height: 90vh;
             }
         }
@@ -53,7 +53,7 @@
         @media (min-width: 769px), (orientation: landscape) {
             #game-container {
                 height: 80vh;
-                width: calc(80vh * 1.5); /* 3:2 ratio */
+                width: calc(80vh * 1.5);
                 max-width: 90vw;
             }
         }
@@ -164,7 +164,6 @@
             margin-top: 15px;
         }
         
-        /* New styles for score pop effect */
         .score-pop {
             position: absolute;
             font-size: 24px;
@@ -184,7 +183,6 @@
             100% { transform: scale(1); opacity: 0; }
         }
         
-        /* Screen shake effect */
         .shake {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
@@ -277,20 +275,22 @@
         
         // Initialize game
         function init() {
-            // Clear any existing obstacles
-            document.querySelectorAll('.obstacle').forEach(obs => {
-                if (obs.parentNode) {
+            // Clear all obstacles first
+            const obstacles = document.querySelectorAll('.obstacle');
+            obstacles.forEach(obs => {
+                if (obs.parentNode === gameContainer) {
                     gameContainer.removeChild(obs);
                 }
             });
-            
-            // Clear any score pop effects
-            document.querySelectorAll('.score-pop').forEach(pop => {
-                if (pop.parentNode) {
+
+            // Clear score pop effects
+            const scorePops = document.querySelectorAll('.score-pop');
+            scorePops.forEach(pop => {
+                if (pop.parentNode === gameContainer) {
                     gameContainer.removeChild(pop);
                 }
             });
-            
+
             // Reset game state
             obstacleGroups = [];
             initGameSize();
@@ -320,12 +320,15 @@
         
         // Start game
         function startGame() {
-            // Cancel any existing animation frame
+            // Cancel any existing game loop
             if (animationId) {
                 cancelAnimationFrame(animationId);
             }
             
+            // Reset game state
             init();
+            
+            // Start new game
             gameIsRunning = true;
             lastObstacleTime = Date.now();
             gameLoop();
@@ -556,8 +559,9 @@
         });
         
         // Restart button with proper cleanup
-        restartBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent this from triggering the gameContainer click
+        restartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             startGame();
         });
         
