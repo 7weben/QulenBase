@@ -17,7 +17,7 @@
             margin: 0;
             padding: 0;
             background: #111;
-            font-family: 'Arial Black', Gadget, sans-serif;
+            font-family: Arial, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
             height: 100vh;
@@ -38,7 +38,6 @@
             border: 3px solid #444;
             border-radius: 5px;
             overflow: hidden;
-            transition: transform 0.3s ease;
         }
 
         /* Mobile (3:4 aspect ratio) */
@@ -127,25 +126,6 @@
             text-align: center;
         }
         
-        .score-popup {
-            position: absolute;
-            font-size: 24px;
-            color: #FFD700;
-            z-index: 25;
-            text-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 0.7),
-                0 0 10px rgba(255, 215, 0, 0.5);
-            font-weight: bold;
-            animation: scorePop 1s forwards;
-            opacity: 0;
-        }
-        
-        @keyframes scorePop {
-            0% { transform: translateY(0) scale(0.5); opacity: 0; }
-            50% { transform: translateY(-30px) scale(1.2); opacity: 1; }
-            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
-        }
-        
         #game-over {
             position: absolute;
             top: 50%;
@@ -153,48 +133,23 @@
             transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 30px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
             display: none;
             z-index: 30;
             width: 80%;
             max-width: 400px;
-            border: 3px solid #FF5555;
-            box-shadow: 0 0 20px rgba(255, 85, 85, 0.5);
-        }
-        
-        #game-over h2 {
-            color: #FF5555;
-            font-size: 32px;
-            margin-top: 0;
-            text-shadow: 0 0 10px rgba(255, 85, 85, 0.7);
-        }
-        
-        #final-score {
-            color: #FFD700;
-            font-size: 28px;
-            display: inline-block;
-            margin: 10px 0;
         }
         
         #restart-btn {
             background-color: #00FF00;
             border: none;
-            padding: 12px 25px;
-            font-size: 20px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
             cursor: pointer;
             margin-top: 15px;
-            font-weight: bold;
-            color: #111;
-            transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-        
-        #restart-btn:hover {
-            background-color: #00CC00;
-            transform: scale(1.05);
         }
         
         /* Challenge Popup Styles */
@@ -213,13 +168,11 @@
         
         #challenge-popup {
             background: #222;
-            padding: 25px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 10px;
             width: 90%;
             max-width: 400px;
             position: relative;
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
         }
         
         #close-challenge {
@@ -229,54 +182,33 @@
             background: transparent;
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-        
-        #close-challenge:hover {
-            background: rgba(255, 255, 255, 0.2);
         }
         
         #challenge-popup h2 {
-            color: #FFD700;
+            color: white;
             margin-top: 0;
-            font-size: 28px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
         
         /* Tic Tac Toe Styles */
         .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin: 20px auto;
-            width: 180px;
+            gap: 5px;
+            margin: 15px auto;
+            width: 150px;
         }
         
         .cell {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: #333;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 28px;
+            font-size: 24px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.2s;
-            color: white;
-        }
-        
-        .cell:hover {
-            background: #444;
-            transform: scale(1.05);
         }
         
         /* Word Guess Styles */
@@ -287,57 +219,42 @@
         #word-clue {
             color: #FFD700;
             font-size: 18px;
-            margin: 15px 0;
+            margin: 10px 0;
         }
         
         #word-display {
-            font-size: 28px;
-            letter-spacing: 8px;
-            margin: 20px 0;
+            font-size: 24px;
+            letter-spacing: 5px;
+            margin: 15px 0;
             color: white;
-            font-weight: bold;
         }
         
         #word-input {
-            padding: 10px;
+            padding: 8px;
             font-size: 16px;
             width: 100%;
-            margin-bottom: 15px;
-            border: 2px solid #444;
-            border-radius: 5px;
-            background: #333;
-            color: white;
+            margin-bottom: 10px;
         }
         
         #submit-guess {
             background: #00FF00;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-weight: bold;
-            color: #111;
-            font-size: 18px;
-            transition: all 0.2s;
         }
         
-        #submit-guess:hover {
-            background: #00CC00;
-            transform: scale(1.05);
-        }
-        
-        #challenge-result, #challenge-result-word {
+        #challenge-result {
             color: white;
-            margin: 15px 0;
-            min-height: 24px;
-            font-size: 18px;
+            margin: 10px 0;
+            min-height: 20px;
         }
         
-        #timer, #word-timer {
+        #timer {
             color: #FF5555;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 10px 0;
         }
         
         #ad-space {
@@ -347,7 +264,64 @@
             text-align: center;
             color: #aaa;
             font-size: 14px;
-            border-radius: 5px;
+        }
+        
+        /* New Styles for Effects */
+        .score-popup {
+            position: absolute;
+            font-size: 24px;
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+            animation: scorePopup 1s forwards;
+            z-index: 25;
+            pointer-events: none;
+        }
+        
+        @keyframes scorePopup {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+        
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+            
+            20%, 80% {
+                transform: translate3d(2px, 0, 0);
+            }
+            
+            30%, 50%, 70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+            
+            40%, 60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+        
+        .vibrate {
+            animation: vibrate 0.3s linear infinite;
+        }
+        
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
     </style>
 </head>
@@ -360,9 +334,9 @@
             <div id="player"></div>
             <div id="score-display">0</div>
             <div id="game-over">
-                <h2>GAME OVER!</h2>
+                <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
-                <button id="restart-btn">PLAY AGAIN</button>
+                <button id="restart-btn">Play Again</button>
             </div>
         </div>
     </div>
@@ -371,7 +345,7 @@
     <div id="challenge-container">
         <div id="challenge-popup">
             <button id="close-challenge">✕</button>
-            <h2>CONTINUE CHALLENGE!</h2>
+            <h2>Continue Challenge!</h2>
             
             <!-- Tic Tac Toe Game -->
             <div id="tic-tac-toe">
@@ -397,7 +371,7 @@
                 <p id="word-clue">Clue: </p>
                 <p id="word-display">_ _ _ _ _</p>
                 <input type="text" id="word-input" placeholder="Your guess">
-                <button id="submit-guess">SUBMIT</button>
+                <button id="submit-guess">Submit</button>
             </div>
             
             <div id="ad-space">
@@ -446,8 +420,7 @@
         let lastObstaclePosition = 'bottom';
         let patternBroken = false;
         let backgroundChanged = false;
-        let currentTrapGroupSize = 0;
-        let trapGroupPassed = false;
+        let lastGroupScored = null; // Track last scored obstacle group
         
         // Initialize game dimensions
         function initGameSize() {
@@ -489,8 +462,7 @@
             lastObstaclePosition = 'bottom';
             patternBroken = false;
             backgroundChanged = false;
-            currentTrapGroupSize = 0;
-            trapGroupPassed = false;
+            lastGroupScored = null;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
@@ -503,6 +475,7 @@
             obstacles = [];
             
             // Reset player position
+            playerY = gameHeight - 45 - 20;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
@@ -515,37 +488,6 @@
         // Calculate current speed
         function getCurrentSpeed() {
             return baseSpeed * currentSpeedMultiplier;
-        }
-        
-        // Create score popup effect
-        function createScorePopup(x, y, value) {
-            const popup = document.createElement('div');
-            popup.className = 'score-popup';
-            popup.textContent = `+${value}`;
-            popup.style.left = `${x}px`;
-            popup.style.top = `${y}px`;
-            gameContainer.appendChild(popup);
-            
-            setTimeout(() => {
-                popup.remove();
-            }, 1000);
-        }
-        
-        // Screen shake effect
-        function screenShake() {
-            gameContainer.style.transform = 'translate(5px, 5px)';
-            setTimeout(() => {
-                gameContainer.style.transform = 'translate(-5px, -5px)';
-                setTimeout(() => {
-                    gameContainer.style.transform = 'translate(3px, 3px)';
-                    setTimeout(() => {
-                        gameContainer.style.transform = 'translate(-3px, -3px)';
-                        setTimeout(() => {
-                            gameContainer.style.transform = 'translate(0, 0)';
-                        }, 50);
-                    }, 50);
-                }, 50);
-            }, 50);
         }
         
         // Start game
@@ -571,23 +513,8 @@
             const currentTime = Date.now();
             
             // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1000 && currentTrapGroupSize === 0) {
-                // Determine trap group size (5 or 7, rarely 9)
-                const rand = Math.random();
-                if (rand < 0.1) {
-                    currentTrapGroupSize = 9; // 10% chance for 9 traps
-                } else if (rand < 0.6) {
-                    currentTrapGroupSize = 5; // 50% chance for 5 traps
-                } else {
-                    currentTrapGroupSize = 7; // 40% chance for 7 traps
-                }
-                
-                // Create first obstacle of the group
-                createObstacle();
-                lastObstacleTime = currentTime;
-            } else if (currentTrapGroupSize > 1 && currentTime - lastObstacleTime > 300) {
-                // Create subsequent obstacles in the group
-                createObstacle();
+            if (currentTime - lastObstacleTime > 1500) { // Reduced frequency since we're making groups
+                createObstacleGroup();
                 lastObstacleTime = currentTime;
             }
             
@@ -611,7 +538,6 @@
                 ) {
                     setTimeout(() => {
                         if (!isShowingChallenge) {
-                            screenShake();
                             // Only show challenge if score >= 100
                             if (score >= 100) {
                                 gameOver();
@@ -628,14 +554,31 @@
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
                     
-                    // Check if we've passed a complete trap group
-                    if (obstacles.length === 0 && !trapGroupPassed) {
-                        trapGroupPassed = true;
+                    // Check if we've passed a complete group (only score once per group)
+                    if (obstacle.groupId && obstacle.groupId !== lastGroupScored) {
                         increaseScore();
-                        checkBackgroundChange();
+                        lastGroupScored = obstacle.groupId;
+                        createScorePopup(obstacleX + obstacleWidth/2, obstacleY + obstacleHeight/2);
                     }
+                    
+                    checkBackgroundChange();
                 }
             }
+        }
+        
+        // Create a score popup effect
+        function createScorePopup(x, y) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+1';
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            gameContainer.appendChild(popup);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                gameContainer.removeChild(popup);
+            }, 1000);
         }
         
         // Render game
@@ -643,47 +586,58 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a new obstacle
-        function createObstacle() {
-            if (currentTrapGroupSize <= 0) return;
+        // Create a group of obstacles (5-7 spikes)
+        function createObstacleGroup() {
+            const groupSize = Math.floor(Math.random() * 3) + 5; // 5-7 spikes
+            const groupId = Date.now(); // Unique ID for this group
+            let isTopObstacle;
             
-            currentTrapGroupSize--;
-            trapGroupPassed = false;
-            
-            let isTopObstacle = lastObstaclePosition === 'bottom';
-            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
-            
-            const obstacle = document.createElement('div');
-            obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
-            
-            let width = 30, height = 30;
-            let y;
-            
-            if (isTopObstacle) {
-                if (isHorizontal) {
-                    y = 20;
-                } else {
-                    y = 20 + Math.random() * (gameHeight - 100);
-                }
-                lastObstaclePosition = 'top';
+            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
+                isTopObstacle = lastObstaclePosition === 'top';
+                patternBroken = true;
             } else {
-                y = gameHeight - height - 20;
-                lastObstaclePosition = 'bottom';
+                isTopObstacle = lastObstaclePosition === 'bottom';
+                patternBroken = false;
             }
             
-            obstacle.style.left = gameWidth + 'px';
-            obstacle.style.width = width + 'px';
-            obstacle.style.height = height + 'px';
-            obstacle.style.top = y + 'px';
+            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
             
-            gameContainer.appendChild(obstacle);
-            
-            obstacles.push({
-                element: obstacle,
-                width: width,
-                height: height,
-                y: y
-            });
+            // Create multiple obstacles in a group
+            for (let i = 0; i < groupSize; i++) {
+                const obstacle = document.createElement('div');
+                obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
+                
+                let width = 30, height = 30;
+                let y;
+                let x = gameWidth + (i * 50); // Space them out by 50px
+                
+                if (isTopObstacle) {
+                    if (isHorizontal) {
+                        y = 20;
+                    } else {
+                        y = 20 + Math.random() * (gameHeight - 100);
+                    }
+                    lastObstaclePosition = 'top';
+                } else {
+                    y = gameHeight - height - 20;
+                    lastObstaclePosition = 'bottom';
+                }
+                
+                obstacle.style.left = x + 'px';
+                obstacle.style.width = width + 'px';
+                obstacle.style.height = height + 'px';
+                obstacle.style.top = y + 'px';
+                
+                gameContainer.appendChild(obstacle);
+                
+                obstacles.push({
+                    element: obstacle,
+                    width: width,
+                    height: height,
+                    y: y,
+                    groupId: groupId // Mark all obstacles in this group with the same ID
+                });
+            }
         }
         
         // Switch between top and bottom floor
@@ -703,18 +657,25 @@
             scoreDisplay.textContent = score;
             // Set speed multiplier to increase by 0.025x per score
             currentSpeedMultiplier = 1 + (score * 0.025);
-            
-            // Create score popup effect
-            createScorePopup(gameWidth / 2, gameHeight / 2, 1);
         }
         
-        // End the game
+        // End the game with screen shake and vibration
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
             
+            // Add screen shake and vibration effects
+            gameContainer.classList.add('shake');
+            document.body.classList.add('vibrate');
+            
             finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
+            
+            // Remove effects after animation completes
+            setTimeout(() => {
+                gameContainer.classList.remove('shake');
+                document.body.classList.remove('vibrate');
+            }, 1000);
         }
         
         // Show random challenge
