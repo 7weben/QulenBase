@@ -513,8 +513,12 @@
             const currentTime = Date.now();
             
             // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1500) { // Reduced frequency since we're making groups
-                createObstacleGroup();
+            if (currentTime - lastObstacleTime > 1000) { // Reduced frequency since we're making groups
+                if (Math.random() > 0.3) {
+                    createObstacleGroup();
+                } else {
+                    createFloatingObstacle();
+                }
                 lastObstacleTime = currentTime;
             }
             
@@ -577,7 +581,9 @@
             
             // Remove after animation completes
             setTimeout(() => {
-                gameContainer.removeChild(popup);
+                if (popup.parentNode) {
+                    gameContainer.removeChild(popup);
+                }
             }, 1000);
         }
         
@@ -586,9 +592,9 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a group of obstacles (5-7 spikes)
+        // Create a group of obstacles (3-5 spikes) attached to floors
         function createObstacleGroup() {
-            const groupSize = Math.floor(Math.random() * 3) + 5; // 5-7 spikes
+            const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
             const groupId = Date.now(); // Unique ID for this group
             let isTopObstacle;
             
@@ -615,7 +621,7 @@
                     if (isHorizontal) {
                         y = 20;
                     } else {
-                        y = 20 + Math.random() * (gameHeight - 100);
+                        y = 20;
                     }
                     lastObstaclePosition = 'top';
                 } else {
@@ -635,9 +641,37 @@
                     width: width,
                     height: height,
                     y: y,
-                    groupId: groupId // Mark all obstacles in this group with the same ID
+                    groupId: groupId, // Mark all obstacles in this group with the same ID
+                    isFloorAttached: true
                 });
             }
+        }
+        
+        // Create single floating obstacles
+        function createFloatingObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle spike vertical';
+            
+            const width = 30, height = 30;
+            const x = gameWidth;
+            // Random y position between floors (with padding)
+            const y = 40 + Math.random() * (gameHeight - 80 - height);
+            
+            obstacle.style.left = x + 'px';
+            obstacle.style.width = width + 'px';
+            obstacle.style.height = height + 'px';
+            obstacle.style.top = y + 'px';
+            
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                width: width,
+                height: height,
+                y: y,
+                groupId: null, // No group for floating obstacles
+                isFloorAttached: false
+            });
         }
         
         // Switch between top and bottom floor
@@ -655,8 +689,8 @@
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            // Set speed multiplier to increase by 0.025x per score
-            currentSpeedMultiplier = 1 + (score * 0.025);
+            // Set speed multiplier to increase by 0.05x per score
+            currentSpeedMultiplier = 1 + (score * 0.05);
         }
         
         // End the game with screen shake and vibration
