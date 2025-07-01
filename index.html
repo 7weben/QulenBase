@@ -328,6 +328,12 @@
             80% { transform: translate(2px, -2px); }
             100% { transform: translate(0); }
         }
+        
+        #math-progress {
+            color: white;
+            text-align: center;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -408,10 +414,9 @@
         let currentSpeedMultiplier = 1;
         let isShowingChallenge = false;
         let currentChallenge = null;
-        let lastObstaclePosition = 'bottom';
-        let patternBroken = false;
         let backgroundChanged = false;
-        let lastGroupScored = null; // Track last scored obstacle group
+        let lastGroupScored = null;
+        let groupCounter = 0;
         
         // Initialize game dimensions
         function initGameSize() {
@@ -450,10 +455,9 @@
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
             currentChallenge = null;
-            lastObstaclePosition = 'bottom';
-            patternBroken = false;
             backgroundChanged = false;
             lastGroupScored = null;
+            groupCounter = 0;
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
@@ -504,8 +508,9 @@
             const currentTime = Date.now();
             
             // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1500) { // Reduced frequency since we're making groups
-                createObstacleGroup();
+            if (currentTime - lastObstacleTime > 1500) {
+                createObstacleGroup('top');
+                createObstacleGroup('bottom');
                 lastObstacleTime = currentTime;
             }
             
@@ -568,7 +573,9 @@
             
             // Remove after animation completes
             setTimeout(() => {
-                gameContainer.removeChild(popup);
+                if (popup.parentNode) {
+                    gameContainer.removeChild(popup);
+                }
             }, 1000);
         }
         
@@ -578,40 +585,23 @@
         }
         
         // Create a group of obstacles (3-5 spikes)
-        function createObstacleGroup() {
+        function createObstacleGroup(position) {
             const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
-            const groupId = Date.now(); // Unique ID for this group
-            let isTopObstacle;
-            
-            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
-                isTopObstacle = lastObstaclePosition === 'top';
-                patternBroken = true;
-            } else {
-                isTopObstacle = lastObstaclePosition === 'bottom';
-                patternBroken = false;
-            }
-            
-            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
+            const groupId = groupCounter++;
             
             // Create multiple obstacles in a group
             for (let i = 0; i < groupSize; i++) {
                 const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
+                obstacle.className = 'obstacle spike horizontal';
                 
                 let width = 30, height = 30;
                 let y;
                 let x = gameWidth + (i * 50); // Space them out by 50px
                 
-                if (isTopObstacle) {
-                    if (isHorizontal) {
-                        y = 20;
-                    } else {
-                        y = 20 + Math.random() * (gameHeight - 100);
-                    }
-                    lastObstaclePosition = 'top';
+                if (position === 'top') {
+                    y = 20;
                 } else {
                     y = gameHeight - height - 20;
-                    lastObstaclePosition = 'bottom';
                 }
                 
                 obstacle.style.left = x + 'px';
@@ -960,4 +950,4 @@
         initGameSize();
     </script>
 </body>
-    </html>
+</html>
