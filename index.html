@@ -417,6 +417,7 @@
         let backgroundChanged = false;
         let lastGroupScored = null;
         let groupCounter = 0;
+        let lastObstaclePosition = 'bottom'; // Track last obstacle position
         
         // Initialize game dimensions
         function initGameSize() {
@@ -458,6 +459,7 @@
             backgroundChanged = false;
             lastGroupScored = null;
             groupCounter = 0;
+            lastObstaclePosition = 'bottom';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
@@ -507,10 +509,9 @@
         function update() {
             const currentTime = Date.now();
             
-            // Generate new obstacles
+            // Generate new obstacles (alternating between top and bottom)
             if (currentTime - lastObstacleTime > 1500) {
-                createObstacleGroup('top');
-                createObstacleGroup('bottom');
+                createObstacleGroup();
                 lastObstacleTime = currentTime;
             }
             
@@ -584,11 +585,15 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a group of obstacles (3-5 spikes)
-        function createObstacleGroup(position) {
+        // Create a group of obstacles (3-5 spikes) - alternating between top and bottom
+        function createObstacleGroup() {
             const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
             const groupId = groupCounter++;
             
+            // Alternate between top and bottom
+            const position = lastObstaclePosition === 'bottom' ? 'top' : 'bottom';
+            lastObstaclePosition = position;
+
             // Create multiple obstacles in a group
             for (let i = 0; i < groupSize; i++) {
                 const obstacle = document.createElement('div');
@@ -616,7 +621,8 @@
                     width: width,
                     height: height,
                     y: y,
-                    groupId: groupId // Mark all obstacles in this group with the same ID
+                    groupId: groupId,
+                    position: position
                 });
             }
         }
