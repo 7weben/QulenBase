@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Precision Dash</title>
+    <title>Precision Dash - Floor Switch Surprise</title>
     <!-- Favicon Links -->
     <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
     <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
@@ -101,6 +101,7 @@
             height: 20px;
             background: rgba(51, 51, 51, 0.7);
             z-index: 3;
+            transition: opacity 0.5s ease;
         }
         
         #top-floor {
@@ -152,126 +153,44 @@
             margin-top: 15px;
         }
         
-        /* Challenge Popup Styles */
-        #challenge-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #challenge-popup {
-            background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
-        }
-        
-        #close-challenge {
+        #warning {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: transparent;
-            border: none;
-            color: white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FF0000;
+            font-size: 24px;
+            text-shadow: 0 0 10px #FFFFFF;
+            display: none;
+            z-index: 25;
+            text-align: center;
+        }
+        
+        #double-tap {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FFFFFF;
             font-size: 20px;
-            cursor: pointer;
-        }
-        
-        #challenge-popup h2 {
-            color: white;
-            margin-top: 0;
-        }
-        
-        /* Memory Game Styles */
-        #memory-game {
+            text-shadow: 0 0 5px #00FFFF;
             display: none;
+            z-index: 25;
         }
         
-        .memory-board {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 15px auto;
+        .slow-motion {
+            animation: slowMo 0.5s infinite alternate;
         }
         
-        .memory-card {
-            width: 60px;
-            height: 60px;
-            background: #444;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            cursor: pointer;
-            border-radius: 5px;
-            color: transparent;
-            transition: all 0.3s ease;
+        @keyframes slowMo {
+            from { filter: brightness(1.2); }
+            to { filter: brightness(1.5); }
         }
         
-        .memory-card.flipped {
-            background: #666;
-            color: white;
-            transform: rotateY(180deg);
+        .fade-out {
+            opacity: 0.3 !important;
         }
         
-        .memory-card.matched {
-            background: #2ecc71;
-            cursor: default;
-        }
-        
-        /* Math Game Styles */
-        #math-game {
-            display: none;
-        }
-        
-        #math-problem {
-            font-size: 24px;
-            color: white;
-            margin: 15px 0;
-            text-align: center;
-        }
-        
-        #math-answer {
-            padding: 8px;
-            font-size: 16px;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        #submit-math {
-            background: #00FF00;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
-        
-        #challenge-result {
-            color: white;
-            margin: 10px 0;
-            min-height: 20px;
-            text-align: center;
-        }
-        
-        #timer {
-            color: #FF5555;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
-            text-align: center;
-        }
-        
-        /* Score Popup Styles */
         .score-popup {
             position: absolute;
             font-size: 24px;
@@ -338,35 +257,12 @@
             <div id="bottom-floor"></div>
             <div id="player"></div>
             <div id="score-display">0</div>
+            <div id="warning">FLOOR ENDING!</div>
+            <div id="double-tap">DOUBLE TAP TO SWITCH!</div>
             <div id="game-over">
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
                 <button id="restart-btn">Play Again</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Challenge Popup -->
-    <div id="challenge-container">
-        <div id="challenge-popup">
-            <button id="close-challenge">✕</button>
-            <h2>Continue Challenge!</h2>
-            
-            <!-- Memory Game -->
-            <div id="memory-game">
-                <p id="challenge-result">Match all pairs in 15 seconds to continue!</p>
-                <div id="timer">Time left: 15</div>
-                <div class="memory-board" id="memory-board"></div>
-            </div>
-            
-            <!-- Math Game -->
-            <div id="math-game">
-                <p id="challenge-result">Solve 3 math problems in 15 seconds to continue!</p>
-                <div id="timer">Time left: 15</div>
-                <div id="math-problem"></div>
-                <input type="number" id="math-answer" placeholder="Your answer">
-                <button id="submit-math">Submit</button>
-                <div id="math-progress">Problems solved: 0/3</div>
             </div>
         </div>
     </div>
@@ -387,13 +283,10 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
-        
-        // Challenge elements
-        const challengeContainer = document.getElementById('challenge-container');
-        const challengePopup = document.getElementById('challenge-popup');
-        const closeChallenge = document.getElementById('close-challenge');
-        const memoryGame = document.getElementById('memory-game');
-        const mathGame = document.getElementById('math-game');
+        const warningDisplay = document.getElementById('warning');
+        const doubleTapDisplay = document.getElementById('double-tap');
+        const topFloor = document.getElementById('top-floor');
+        const bottomFloor = document.getElementById('bottom-floor');
         
         // Game variables
         let gameHeight, gameWidth;
@@ -406,12 +299,17 @@
         let animationId;
         const baseSpeed = 6;
         let currentSpeedMultiplier = 1;
-        let isShowingChallenge = false;
-        let currentChallenge = null;
-        let lastObstaclePosition = 'bottom';
-        let patternBroken = false;
         let backgroundChanged = false;
-        let lastGroupScored = null; // Track last scored obstacle group
+        let lastGroupScored = null;
+        let groupCounter = 0;
+        let lastObstaclePosition = 'bottom';
+        let floorSwitchTimer;
+        let nextSwitchTime;
+        let isFloorEnding = false;
+        let slowMoActive = false;
+        let normalSpeedMultiplier = 1;
+        let tapCount = 0;
+        let lastTapTime = 0;
         
         // Initialize game dimensions
         function initGameSize() {
@@ -449,11 +347,10 @@
             score = 0;
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
-            currentChallenge = null;
-            lastObstaclePosition = 'bottom';
-            patternBroken = false;
             backgroundChanged = false;
             lastGroupScored = null;
+            groupCounter = 0;
+            lastObstaclePosition = 'bottom';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
@@ -470,10 +367,68 @@
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
+            // Reset floors
+            topFloor.classList.remove('fade-out');
+            bottomFloor.classList.remove('fade-out');
+            
+            // Set random time for first floor switch (7-10 minutes converted to ms)
+            clearTimeout(floorSwitchTimer);
+            isFloorEnding = false;
+            slowMoActive = false;
+            warningDisplay.style.display = 'none';
+            doubleTapDisplay.style.display = 'none';
+            gameContainer.classList.remove('slow-motion');
+            
+            nextSwitchTime = Math.random() * 3 * 60 * 1000 + 7 * 60 * 1000;
+            floorSwitchTimer = setTimeout(startFloorEnding, nextSwitchTime);
+            
             // Hide game over screen
             gameOverScreen.style.display = 'none';
-            challengeContainer.style.display = 'none';
-            isShowingChallenge = false;
+        }
+        
+        // Start floor ending sequence
+        function startFloorEnding() {
+            isFloorEnding = true;
+            warningDisplay.style.display = 'block';
+            doubleTapDisplay.style.display = 'block';
+            gameContainer.classList.add('slow-motion');
+            
+            // Fade out the current floor
+            if (isOnTopFloor) {
+                topFloor.classList.add('fade-out');
+            } else {
+                bottomFloor.classList.add('fade-out');
+            }
+            
+            // Activate slow motion
+            slowMoActive = true;
+            normalSpeedMultiplier = currentSpeedMultiplier;
+            currentSpeedMultiplier = normalSpeedMultiplier * 0.3;
+            
+            // Player must switch within 3 seconds or game over
+            setTimeout(() => {
+                if (isFloorEnding) {
+                    gameOver();
+                }
+            }, 3000);
+        }
+        
+        // Complete floor switch
+        function completeFloorSwitch() {
+            isFloorEnding = false;
+            slowMoActive = false;
+            currentSpeedMultiplier = normalSpeedMultiplier;
+            warningDisplay.style.display = 'none';
+            doubleTapDisplay.style.display = 'none';
+            gameContainer.classList.remove('slow-motion');
+            
+            // Restore floor visibility
+            topFloor.classList.remove('fade-out');
+            bottomFloor.classList.remove('fade-out');
+            
+            // Set random time for next floor switch (1-4 minutes)
+            nextSwitchTime = Math.random() * 3 * 60 * 1000 + 1 * 60 * 1000;
+            floorSwitchTimer = setTimeout(startFloorEnding, nextSwitchTime);
         }
         
         // Calculate current speed
@@ -503,8 +458,8 @@
         function update() {
             const currentTime = Date.now();
             
-            // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1500) { // Reduced frequency since we're making groups
+            // Generate new obstacles (alternating between top and bottom)
+            if (currentTime - lastObstacleTime > 1500 && !isFloorEnding) {
                 createObstacleGroup();
                 lastObstacleTime = currentTime;
             }
@@ -528,14 +483,8 @@
                     playerY + 45 > obstacleY
                 ) {
                     setTimeout(() => {
-                        if (!isShowingChallenge) {
-                            // Only show challenge if score >= 100
-                            if (score >= 100) {
-                                gameOver();
-                                showRandomChallenge();
-                            } else {
-                                gameOver();
-                            }
+                        if (!isFloorEnding) {
+                            gameOver();
                         }
                     }, 100);
                 }
@@ -568,7 +517,9 @@
             
             // Remove after animation completes
             setTimeout(() => {
-                gameContainer.removeChild(popup);
+                if (popup.parentNode) {
+                    gameContainer.removeChild(popup);
+                }
             }, 1000);
         }
         
@@ -577,41 +528,28 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a group of obstacles (3-5 spikes)
+        // Create a group of obstacles (3-5 spikes) - alternating between top and bottom
         function createObstacleGroup() {
             const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
-            const groupId = Date.now(); // Unique ID for this group
-            let isTopObstacle;
+            const groupId = groupCounter++;
             
-            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
-                isTopObstacle = lastObstaclePosition === 'top';
-                patternBroken = true;
-            } else {
-                isTopObstacle = lastObstaclePosition === 'bottom';
-                patternBroken = false;
-            }
-            
-            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
-            
+            // Alternate between top and bottom
+            const position = lastObstaclePosition === 'bottom' ? 'top' : 'bottom';
+            lastObstaclePosition = position;
+
             // Create multiple obstacles in a group
             for (let i = 0; i < groupSize; i++) {
                 const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
+                obstacle.className = 'obstacle spike horizontal';
                 
                 let width = 30, height = 30;
                 let y;
                 let x = gameWidth + (i * 50); // Space them out by 50px
                 
-                if (isTopObstacle) {
-                    if (isHorizontal) {
-                        y = 20;
-                    } else {
-                        y = 20 + Math.random() * (gameHeight - 100);
-                    }
-                    lastObstaclePosition = 'top';
+                if (position === 'top') {
+                    y = 20;
                 } else {
                     y = gameHeight - height - 20;
-                    lastObstaclePosition = 'bottom';
                 }
                 
                 obstacle.style.left = x + 'px';
@@ -626,7 +564,8 @@
                     width: width,
                     height: height,
                     y: y,
-                    groupId: groupId // Mark all obstacles in this group with the same ID
+                    groupId: groupId,
+                    position: position
                 });
             }
         }
@@ -635,6 +574,23 @@
         function switchFloor() {
             if (!gameIsRunning) return;
             
+            // Check for double tap during floor ending
+            if (isFloorEnding) {
+                const now = Date.now();
+                if (now - lastTapTime < 300) { // 300ms double tap window
+                    tapCount = 0;
+                    isOnTopFloor = !isOnTopFloor;
+                    playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
+                    completeFloorSwitch();
+                    playJumpSound();
+                    return;
+                }
+                lastTapTime = now;
+                tapCount++;
+                return;
+            }
+            
+            // Normal floor switch
             isOnTopFloor = !isOnTopFloor;
             playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
             
@@ -648,12 +604,16 @@
             scoreDisplay.textContent = score;
             // Increased speed multiplier (0.05x per score)
             currentSpeedMultiplier = 1 + (score * 0.05);
+            if (slowMoActive) {
+                normalSpeedMultiplier = 1 + (score * 0.05);
+            }
         }
         
         // End the game with screen shake and vibration
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
+            clearTimeout(floorSwitchTimer);
             
             // Add screen shake and vibration effects
             gameContainer.classList.add('shake');
@@ -667,252 +627,6 @@
                 gameContainer.classList.remove('shake');
                 document.body.classList.remove('vibrate');
             }, 1000);
-        }
-        
-        // Show random challenge
-        function showRandomChallenge() {
-            isShowingChallenge = true;
-            gameOverScreen.style.display = 'none';
-            challengeContainer.style.display = 'flex';
-            
-            if (Math.random() > 0.5) {
-                currentChallenge = 'memory';
-                memoryGame.style.display = 'block';
-                mathGame.style.display = 'none';
-                startMemoryGame();
-            } else {
-                currentChallenge = 'math';
-                memoryGame.style.display = 'none';
-                mathGame.style.display = 'block';
-                startMathGame();
-            }
-        }
-        
-        /* ===== MEMORY GAME ===== */
-        let memoryCards = [];
-        let flippedCards = [];
-        let matchedPairs = 0;
-        let memoryTimer = 15;
-        let memoryTimerInterval;
-        const memorySymbols = ['🍎', '🍌', '🍒', '🍓', '🍊', '🍋', '🍐', '🍉'];
-        
-        function startMemoryGame() {
-            resetMemoryGame();
-            startMemoryTimer();
-        }
-        
-        function resetMemoryGame() {
-            const memoryBoard = document.getElementById('memory-board');
-            memoryBoard.innerHTML = '';
-            memoryCards = [];
-            flippedCards = [];
-            matchedPairs = 0;
-            memoryTimer = 15;
-            document.getElementById('timer').textContent = "Time left: 15";
-            document.getElementById('challenge-result').textContent = "Match all pairs in 15 seconds to continue!";
-            
-            // Create pairs of symbols
-            const symbols = [...memorySymbols, ...memorySymbols];
-            
-            // Shuffle symbols
-            for (let i = symbols.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [symbols[i], symbols[j]] = [symbols[j], symbols[i]];
-            }
-            
-            // Create cards
-            for (let i = 0; i < symbols.length; i++) {
-                const card = document.createElement('div');
-                card.className = 'memory-card';
-                card.dataset.index = i;
-                card.dataset.symbol = symbols[i];
-                card.textContent = symbols[i];
-                card.addEventListener('click', flipCard);
-                memoryBoard.appendChild(card);
-                memoryCards.push(card);
-            }
-            
-            // Initially hide all cards
-            setTimeout(() => {
-                memoryCards.forEach(card => {
-                    card.textContent = '';
-                    card.style.backgroundColor = '#444';
-                });
-            }, 1000);
-        }
-        
-        function startMemoryTimer() {
-            clearInterval(memoryTimerInterval);
-            memoryTimerInterval = setInterval(() => {
-                memoryTimer--;
-                document.getElementById('timer').textContent = `Time left: ${memoryTimer}`;
-                
-                if (memoryTimer <= 0) {
-                    clearInterval(memoryTimerInterval);
-                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        gameOverScreen.style.display = 'block';
-                        isShowingChallenge = false;
-                    }, 1500);
-                }
-            }, 1000);
-        }
-        
-        function flipCard() {
-            // Don't allow flipping if already flipped or matched
-            if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
-            
-            // Don't allow more than 2 cards flipped at once
-            if (flippedCards.length >= 2) return;
-            
-            // Flip the card
-            this.classList.add('flipped');
-            this.textContent = this.dataset.symbol;
-            flippedCards.push(this);
-            
-            // Check for match if two cards are flipped
-            if (flippedCards.length === 2) {
-                checkForMatch();
-            }
-        }
-        
-        function checkForMatch() {
-            const [card1, card2] = flippedCards;
-            
-            if (card1.dataset.symbol === card2.dataset.symbol) {
-                // Match found
-                card1.classList.add('matched');
-                card2.classList.add('matched');
-                flippedCards = [];
-                matchedPairs++;
-                
-                // Check if all pairs are matched
-                if (matchedPairs === memorySymbols.length) {
-                    clearInterval(memoryTimerInterval);
-                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        continueAfterChallenge();
-                    }, 1500);
-                }
-            } else {
-                // No match - flip back after delay
-                setTimeout(() => {
-                    card1.classList.remove('flipped');
-                    card2.classList.remove('flipped');
-                    card1.textContent = '';
-                    card2.textContent = '';
-                    flippedCards = [];
-                }, 1000);
-            }
-        }
-        
-        /* ===== MATH GAME ===== */
-        let mathProblems = [];
-        let currentProblem = 0;
-        let problemsSolved = 0;
-        let mathTimer = 15;
-        let mathTimerInterval;
-        
-        function startMathGame() {
-            resetMathGame();
-            startMathTimer();
-            if (window.innerWidth > 768) {
-                document.getElementById('math-answer').focus();
-            }
-        }
-        
-        function resetMathGame() {
-            mathProblems = [];
-            currentProblem = 0;
-            problemsSolved = 0;
-            mathTimer = 15;
-            document.getElementById('timer').textContent = "Time left: 15";
-            document.getElementById('challenge-result').textContent = "Solve 3 math problems in 15 seconds to continue!";
-            document.getElementById('math-progress').textContent = "Problems solved: 0/3";
-            
-            // Generate 3 random math problems
-            for (let i = 0; i < 3; i++) {
-                const a = Math.floor(Math.random() * 10) + 1;
-                const b = Math.floor(Math.random() * 10) + 1;
-                const operators = ['+', '-', '*'];
-                const op = operators[Math.floor(Math.random() * operators.length)];
-                
-                let answer;
-                switch (op) {
-                    case '+': answer = a + b; break;
-                    case '-': answer = a - b; break;
-                    case '*': answer = a * b; break;
-                }
-                
-                mathProblems.push({
-                    problem: `${a} ${op} ${b}`,
-                    answer: answer
-                });
-            }
-            
-            displayCurrentProblem();
-        }
-        
-        function displayCurrentProblem() {
-            document.getElementById('math-problem').textContent = mathProblems[currentProblem].problem;
-            document.getElementById('math-answer').value = '';
-        }
-        
-        function startMathTimer() {
-            clearInterval(mathTimerInterval);
-            mathTimerInterval = setInterval(() => {
-                mathTimer--;
-                document.getElementById('timer').textContent = `Time left: ${mathTimer}`;
-                
-                if (mathTimer <= 0) {
-                    clearInterval(mathTimerInterval);
-                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        gameOverScreen.style.display = 'block';
-                        isShowingChallenge = false;
-                    }, 1500);
-                }
-            }, 1000);
-        }
-        
-        function checkMathAnswer() {
-            const userAnswer = parseInt(document.getElementById('math-answer').value);
-            const correctAnswer = mathProblems[currentProblem].answer;
-            
-            if (userAnswer === correctAnswer) {
-                problemsSolved++;
-                document.getElementById('math-progress').textContent = `Problems solved: ${problemsSolved}/3`;
-                
-                if (problemsSolved >= 3) {
-                    clearInterval(mathTimerInterval);
-                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        continueAfterChallenge();
-                    }, 1500);
-                } else {
-                    currentProblem++;
-                    displayCurrentProblem();
-                }
-            } else {
-                document.getElementById('challenge-result').textContent = "Wrong answer! Try again.";
-                document.getElementById('math-answer').value = '';
-            }
-        }
-        
-        function continueAfterChallenge() {
-            isShowingChallenge = false;
-            currentChallenge = null;
-            gameIsRunning = true;
-            lastObstacleTime = Date.now();
-            gameLoop();
         }
         
         // Event listeners
@@ -935,22 +649,17 @@
             }
         });
         
-        restartBtn.addEventListener('click', startGame);
-        closeChallenge.addEventListener('click', () => {
-            clearInterval(memoryTimerInterval);
-            clearInterval(mathTimerInterval);
-            challengeContainer.style.display = 'none';
-            gameOverScreen.style.display = 'block';
-            isShowingChallenge = false;
-        });
-        
-        // Math game event listeners
-        document.getElementById('submit-math').addEventListener('click', checkMathAnswer);
-        document.getElementById('math-answer').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                checkMathAnswer();
+        // Touch events for mobile double tap
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameIsRunning) {
+                switchFloor();
+            } else if (gameOverScreen.style.display !== 'block') {
+                startGame();
             }
         });
+        
+        restartBtn.addEventListener('click', startGame);
         
         // Handle window resize and orientation change
         window.addEventListener('resize', initGameSize);
