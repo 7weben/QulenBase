@@ -1,672 +1,280 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Precision Dash - Floor Switch Surprise</title>
-    <!-- Favicon Links -->
-    <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
-    <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
-    <link rel="apple-touch-icon" href="https://iili.io/FIAXDDF.png">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash Clone</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
         body {
             margin: 0;
             padding: 0;
-            background: #111;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            touch-action: manipulation;
-            height: 100vh;
-            width: 100vw;
-        }
-        
-        #game-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            width: 100vw;
-        }
-        
-        #game-container {
-            position: relative;
-            background: #000;
-            border: 3px solid #444;
-            border-radius: 5px;
+            background-color: #222;
+            font-family: Arial, sans-serif;
             overflow: hidden;
         }
 
-        /* Mobile (3:4 aspect ratio) */
-        @media (max-width: 768px), (orientation: portrait) {
-            #game-container {
-                width: 90vw;
-                height: calc(90vw * 1.333); /* 3:4 ratio */
-                max-height: 90vh;
-            }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-image: url('NBG.png');
+            background-size: cover;
+            overflow: hidden;
+            border: 4px solid #444;
+            border-radius: 10px;
         }
 
-        /* Desktop (3:2 aspect ratio) */
-        @media (min-width: 769px), (orientation: landscape) {
-            #game-container {
-                height: 80vh;
-                width: calc(80vh * 1.5); /* 3:2 ratio */
-                max-width: 90vw;
-            }
-        }
-        
-        #game-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            transition: opacity 0.5s ease;
-            background-image: url('NBG.png');
-        }
-        
         #player {
             position: absolute;
-            width: 45px;
-            height: 45px;
-            background: transparent;
-            z-index: 10;
+            width: 50px;
+            height: 50px;
+            bottom: 100px;
+            left: 100px;
             background-image: url('UQH.gif');
             background-size: contain;
             background-repeat: no-repeat;
-            transform: scaleX(-1);
-            transition: top 0.15s ease;
+            z-index: 10;
         }
-        
-        .obstacle {
-            position: absolute;
-            z-index: 5;
-            background: #FF5555;
-        }
-        
-        .spike.horizontal {
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
-        
-        .spike.vertical {
-            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
-        }
-        
-        #top-floor, #bottom-floor {
+
+        #ground {
             position: absolute;
             width: 100%;
-            height: 20px;
-            background: rgba(51, 51, 51, 0.7);
-            z-index: 3;
-            transition: opacity 0.5s ease;
-        }
-        
-        #top-floor {
-            top: 0;
-        }
-        
-        #bottom-floor {
+            height: 100px;
             bottom: 0;
+            background-color: #333;
+            z-index: 5;
         }
-        
-        #score-display {
+
+        .obstacle {
             position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 28px;
-            color: #FFD700;
-            z-index: 20;
-            text-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 0.7),
-                0 0 10px rgba(255, 215, 0, 0.5);
-            font-weight: bold;
-            text-align: center;
+            width: 30px;
+            height: 60px;
+            bottom: 100px;
+            background-color: #ff5555;
+            z-index: 8;
         }
-        
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 24px;
+            z-index: 20;
+        }
+
         #game-over {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            font-size: 36px;
             text-align: center;
             display: none;
             z-index: 30;
-            width: 80%;
-            max-width: 400px;
+            text-shadow: 2px 2px 4px #000;
         }
-        
-        #restart-btn {
-            background-color: #00FF00;
-            border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        
-        #warning {
+
+        #start-btn {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #FF0000;
-            font-size: 24px;
-            text-shadow: 0 0 10px #FFFFFF;
-            display: none;
-            z-index: 25;
-            text-align: center;
-        }
-        
-        #double-tap {
-            position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #FFFFFF;
+            padding: 15px 30px;
             font-size: 20px;
-            text-shadow: 0 0 5px #00FFFF;
-            display: none;
-            z-index: 25;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 30;
         }
-        
-        .slow-motion {
-            animation: slowMo 0.5s infinite alternate;
-        }
-        
-        @keyframes slowMo {
-            from { filter: brightness(1.2); }
-            to { filter: brightness(1.5); }
-        }
-        
-        .fade-out {
-            opacity: 0.3 !important;
-        }
-        
-        .score-popup {
-            position: absolute;
-            font-size: 24px;
-            color: #FFD700;
-            font-weight: bold;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
-            animation: scorePopup 1s forwards;
-            z-index: 25;
-            pointer-events: none;
-        }
-        
-        @keyframes scorePopup {
-            0% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-        }
-        
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        
-        @keyframes shake {
-            10%, 90% {
-                transform: translate3d(-1px, 0, 0);
-            }
-            
-            20%, 80% {
-                transform: translate3d(2px, 0, 0);
-            }
-            
-            30%, 50%, 70% {
-                transform: translate3d(-4px, 0, 0);
-            }
-            
-            40%, 60% {
-                transform: translate3d(4px, 0, 0);
-            }
-        }
-        
-        .vibrate {
-            animation: vibrate 0.3s linear infinite;
-        }
-        
-        @keyframes vibrate {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
+
+        #start-btn:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-    <div id="game-wrapper">
-        <div id="game-container">
-            <div id="game-bg"></div>
-            <div id="top-floor"></div>
-            <div id="bottom-floor"></div>
-            <div id="player"></div>
-            <div id="score-display">0</div>
-            <div id="warning">FLOOR ENDING!</div>
-            <div id="double-tap">DOUBLE TAP TO SWITCH!</div>
-            <div id="game-over">
-                <h2>Game Over!</h2>
-                <p>Score: <span id="final-score">0</span></p>
-                <button id="restart-btn">Play Again</button>
-            </div>
-        </div>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="ground"></div>
+        <div id="score">Score: 0</div>
+        <div id="game-over">GAME OVER<br>Press R to restart</div>
+        <button id="start-btn">Start Game</button>
     </div>
 
     <script>
-        // Simple Jump Sound Only
-        const playJumpSound = () => {
-            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
-            jumpSound.volume = 0.5;
-            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
-        };
-
-        // Game elements
+        // Game variables
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
-        const gameBg = document.getElementById('game-bg');
-        const scoreDisplay = document.getElementById('score-display');
-        const gameOverScreen = document.getElementById('game-over');
-        const finalScoreDisplay = document.getElementById('final-score');
-        const restartBtn = document.getElementById('restart-btn');
-        const warningDisplay = document.getElementById('warning');
-        const doubleTapDisplay = document.getElementById('double-tap');
-        const topFloor = document.getElementById('top-floor');
-        const bottomFloor = document.getElementById('bottom-floor');
-        
-        // Game variables
-        let gameHeight, gameWidth;
-        let playerY, playerX = 50;
-        let isOnTopFloor = false;
-        let gameIsRunning = false;
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+        const startBtn = document.getElementById('start-btn');
+
+        let isJumping = false;
+        let isGameOver = false;
+        let isGameStarted = false;
         let score = 0;
-        let obstacles = [];
-        let lastObstacleTime = 0;
-        let animationId;
-        const baseSpeed = 6;
-        let currentSpeedMultiplier = 1;
-        let backgroundChanged = false;
-        let lastGroupScored = null;
-        let groupCounter = 0;
-        let lastObstaclePosition = 'bottom';
-        let floorSwitchTimer;
-        let nextSwitchTime;
-        let isFloorEnding = false;
-        let slowMoActive = false;
-        let normalSpeedMultiplier = 1;
-        let tapCount = 0;
-        let lastTapTime = 0;
-        
-        // Initialize game dimensions
-        function initGameSize() {
-            gameHeight = gameContainer.offsetHeight;
-            gameWidth = gameContainer.offsetWidth;
-            playerY = gameHeight - 45 - 20;
-            player.style.top = playerY + 'px';
-            player.style.left = playerX + 'px';
-        }
-        
-        // Change background to DBG.png (only once at 100 score)
-        function changeBackground() {
-            if (backgroundChanged) return;
-            backgroundChanged = true;
-            
-            gameBg.style.opacity = 0;
-            
-            setTimeout(() => {
-                gameBg.style.backgroundImage = "url('DBG.png')";
-                gameBg.style.opacity = 1;
-            }, 500);
-        }
-        
-        // Check if background should change (only at 100 score)
-        function checkBackgroundChange() {
-            if (score >= 100 && !backgroundChanged) {
-                changeBackground();
-            }
-        }
-        
-        // Initialize game
-        function init() {
-            initGameSize();
-            isOnTopFloor = false;
-            score = 0;
-            currentSpeedMultiplier = 1;
-            scoreDisplay.textContent = "0";
-            backgroundChanged = false;
-            lastGroupScored = null;
-            groupCounter = 0;
-            lastObstaclePosition = 'bottom';
-            gameBg.style.backgroundImage = "url('NBG.png')";
-            gameBg.style.opacity = 1;
-            
-            // Clear all obstacles
-            obstacles.forEach(obstacle => {
-                if (obstacle.element.parentNode) {
-                    gameContainer.removeChild(obstacle.element);
-                }
-            });
-            obstacles = [];
-            
-            // Reset player position
-            playerY = gameHeight - 45 - 20;
-            player.style.top = playerY + 'px';
-            player.style.left = playerX + 'px';
-            
-            // Reset floors
-            topFloor.classList.remove('fade-out');
-            bottomFloor.classList.remove('fade-out');
-            
-            // Set random time for first floor switch (7-10 minutes converted to ms)
-            clearTimeout(floorSwitchTimer);
-            isFloorEnding = false;
-            slowMoActive = false;
-            warningDisplay.style.display = 'none';
-            doubleTapDisplay.style.display = 'none';
-            gameContainer.classList.remove('slow-motion');
-            
-            nextSwitchTime = Math.random() * 3 * 60 * 1000 + 7 * 60 * 1000;
-            floorSwitchTimer = setTimeout(startFloorEnding, nextSwitchTime);
-            
-            // Hide game over screen
-            gameOverScreen.style.display = 'none';
-        }
-        
-        // Start floor ending sequence
-        function startFloorEnding() {
-            isFloorEnding = true;
-            warningDisplay.style.display = 'block';
-            doubleTapDisplay.style.display = 'block';
-            gameContainer.classList.add('slow-motion');
-            
-            // Fade out the current floor
-            if (isOnTopFloor) {
-                topFloor.classList.add('fade-out');
-            } else {
-                bottomFloor.classList.add('fade-out');
-            }
-            
-            // Activate slow motion
-            slowMoActive = true;
-            normalSpeedMultiplier = currentSpeedMultiplier;
-            currentSpeedMultiplier = normalSpeedMultiplier * 0.3;
-            
-            // Player must switch within 3 seconds or game over
-            setTimeout(() => {
-                if (isFloorEnding) {
-                    gameOver();
-                }
-            }, 3000);
-        }
-        
-        // Complete floor switch
-        function completeFloorSwitch() {
-            isFloorEnding = false;
-            slowMoActive = false;
-            currentSpeedMultiplier = normalSpeedMultiplier;
-            warningDisplay.style.display = 'none';
-            doubleTapDisplay.style.display = 'none';
-            gameContainer.classList.remove('slow-motion');
-            
-            // Restore floor visibility
-            topFloor.classList.remove('fade-out');
-            bottomFloor.classList.remove('fade-out');
-            
-            // Set random time for next floor switch (1-4 minutes)
-            nextSwitchTime = Math.random() * 3 * 60 * 1000 + 1 * 60 * 1000;
-            floorSwitchTimer = setTimeout(startFloorEnding, nextSwitchTime);
-        }
-        
-        // Calculate current speed
-        function getCurrentSpeed() {
-            return baseSpeed * currentSpeedMultiplier;
-        }
-        
-        // Start game
+        let gameSpeed = 5;
+        let gravity = 0.9;
+        let playerVelocity = 0;
+        let obstacleInterval;
+        let animationFrame;
+
+        // Player properties
+        const playerWidth = 50;
+        const playerHeight = 50;
+        let playerBottom = 100;
+        let playerLeft = 100;
+
+        // Start game function
         function startGame() {
-            init();
-            gameIsRunning = true;
-            lastObstacleTime = Date.now();
+            if (isGameStarted) return;
+            
+            isGameStarted = true;
+            isGameOver = false;
+            score = 0;
+            gameSpeed = 5;
+            playerBottom = 100;
+            playerVelocity = 0;
+            
+            // Clear any existing obstacles
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+            
+            // Hide start button and game over message
+            startBtn.style.display = 'none';
+            gameOverElement.style.display = 'none';
+            
+            // Start obstacle generation
+            obstacleInterval = setInterval(createObstacle, 2000);
+            
+            // Start game loop
             gameLoop();
         }
-        
+
         // Game loop
         function gameLoop() {
-            if (!gameIsRunning) return;
+            if (isGameOver) return;
             
-            update();
-            render();
+            updatePlayer();
+            updateObstacles();
+            updateScore();
             
-            animationId = requestAnimationFrame(gameLoop);
+            animationFrame = requestAnimationFrame(gameLoop);
         }
-        
-        // Update game state
-        function update() {
-            const currentTime = Date.now();
-            
-            // Generate new obstacles (alternating between top and bottom)
-            if (currentTime - lastObstacleTime > 1500 && !isFloorEnding) {
-                createObstacleGroup();
-                lastObstacleTime = currentTime;
-            }
-            
-            // Move obstacles and check for collisions
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obstacle = obstacles[i];
-                const obstacleX = parseFloat(obstacle.element.style.left);
-                const obstacleY = parseFloat(obstacle.element.style.top);
-                const obstacleWidth = parseFloat(obstacle.element.style.width);
-                const obstacleHeight = parseFloat(obstacle.element.style.height);
-                
-                // Move obstacle at current speed
-                obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
-                
-                // Check for collision with player
-                if (
-                    playerX < obstacleX + obstacleWidth &&
-                    playerX + 45 > obstacleX &&
-                    playerY < obstacleY + obstacleHeight &&
-                    playerY + 45 > obstacleY
-                ) {
-                    setTimeout(() => {
-                        if (!isFloorEnding) {
-                            gameOver();
-                        }
-                    }, 100);
-                }
-                
-                // Remove obstacles that are off screen
-                if (obstacleX < -100) {
-                    gameContainer.removeChild(obstacle.element);
-                    obstacles.splice(i, 1);
-                    
-                    // Check if we've passed a complete group (only score once per group)
-                    if (obstacle.groupId && obstacle.groupId !== lastGroupScored) {
-                        increaseScore();
-                        lastGroupScored = obstacle.groupId;
-                        createScorePopup(obstacleX + obstacleWidth/2, obstacleY + obstacleHeight/2);
-                    }
-                    
-                    checkBackgroundChange();
-                }
-            }
-        }
-        
-        // Create a score popup effect
-        function createScorePopup(x, y) {
-            const popup = document.createElement('div');
-            popup.className = 'score-popup';
-            popup.textContent = '+1';
-            popup.style.left = x + 'px';
-            popup.style.top = y + 'px';
-            gameContainer.appendChild(popup);
-            
-            // Remove after animation completes
-            setTimeout(() => {
-                if (popup.parentNode) {
-                    gameContainer.removeChild(popup);
-                }
-            }, 1000);
-        }
-        
-        // Render game
-        function render() {
-            player.style.top = playerY + 'px';
-        }
-        
-        // Create a group of obstacles (3-5 spikes) - alternating between top and bottom
-        function createObstacleGroup() {
-            const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
-            const groupId = groupCounter++;
-            
-            // Alternate between top and bottom
-            const position = lastObstaclePosition === 'bottom' ? 'top' : 'bottom';
-            lastObstaclePosition = position;
 
-            // Create multiple obstacles in a group
-            for (let i = 0; i < groupSize; i++) {
-                const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle spike horizontal';
+        // Update player position
+        function updatePlayer() {
+            playerVelocity *= gravity;
+            playerBottom -= playerVelocity;
+            
+            // Prevent player from going below ground
+            if (playerBottom <= 0) {
+                playerBottom = 0;
+                isJumping = false;
+            }
+            
+            player.style.bottom = playerBottom + 'px';
+        }
+
+        // Create new obstacle
+        function createObstacle() {
+            if (isGameOver) return;
+            
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            obstacle.style.left = gameContainer.offsetWidth + 'px';
+            
+            // Random obstacle height
+            const obstacleHeight = Math.random() * 60 + 40;
+            obstacle.style.height = obstacleHeight + 'px';
+            obstacle.style.bottom = (100 - (obstacleHeight - 60 > 0 ? 0 : 60 - obstacleHeight)) + 'px';
+            
+            gameContainer.appendChild(obstacle);
+        }
+
+        // Update obstacles position
+        function updateObstacles() {
+            const obstacles = document.querySelectorAll('.obstacle');
+            
+            obstacles.forEach(obstacle => {
+                let obstacleLeft = parseInt(obstacle.style.left);
+                obstacleLeft -= gameSpeed;
+                obstacle.style.left = obstacleLeft + 'px';
                 
-                let width = 30, height = 30;
-                let y;
-                let x = gameWidth + (i * 50); // Space them out by 50px
-                
-                if (position === 'top') {
-                    y = 20;
-                } else {
-                    y = gameHeight - height - 20;
+                // Remove obstacle when it goes off screen
+                if (obstacleLeft < -30) {
+                    obstacle.remove();
+                    score++;
                 }
                 
-                obstacle.style.left = x + 'px';
-                obstacle.style.width = width + 'px';
-                obstacle.style.height = height + 'px';
-                obstacle.style.top = y + 'px';
-                
-                gameContainer.appendChild(obstacle);
-                
-                obstacles.push({
-                    element: obstacle,
-                    width: width,
-                    height: height,
-                    y: y,
-                    groupId: groupId,
-                    position: position
-                });
-            }
-        }
-        
-        // Switch between top and bottom floor
-        function switchFloor() {
-            if (!gameIsRunning) return;
-            
-            // Check for double tap during floor ending
-            if (isFloorEnding) {
-                const now = Date.now();
-                if (now - lastTapTime < 300) { // 300ms double tap window
-                    tapCount = 0;
-                    isOnTopFloor = !isOnTopFloor;
-                    playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
-                    completeFloorSwitch();
-                    playJumpSound();
-                    return;
+                // Check for collision
+                if (
+                    obstacleLeft < playerLeft + playerWidth &&
+                    obstacleLeft + 30 > playerLeft &&
+                    playerBottom < parseInt(obstacle.style.height) &&
+                    playerBottom + playerHeight > 0
+                ) {
+                    gameOver();
                 }
-                lastTapTime = now;
-                tapCount++;
-                return;
-            }
-            
-            // Normal floor switch
-            isOnTopFloor = !isOnTopFloor;
-            playerY = isOnTopFloor ? 20 : gameHeight - 45 - 20;
-            
-            // Play jump sound
-            playJumpSound();
+            });
         }
-        
-        // Increase score
-        function increaseScore() {
-            score++;
-            scoreDisplay.textContent = score;
-            // Increased speed multiplier (0.05x per score)
-            currentSpeedMultiplier = 1 + (score * 0.05);
-            if (slowMoActive) {
-                normalSpeedMultiplier = 1 + (score * 0.05);
+
+        // Update score display
+        function updateScore() {
+            scoreElement.textContent = `Score: ${score}`;
+            
+            // Increase game speed as score increases
+            if (score > 0 && score % 5 === 0) {
+                gameSpeed = 5 + Math.floor(score / 5);
             }
         }
-        
-        // End the game with screen shake and vibration
+
+        // Jump function
+        function jump() {
+            if (isJumping || !isGameStarted || isGameOver) return;
+            
+            playerVelocity = 15;
+            isJumping = true;
+        }
+
+        // Game over function
         function gameOver() {
-            gameIsRunning = false;
-            cancelAnimationFrame(animationId);
-            clearTimeout(floorSwitchTimer);
-            
-            // Add screen shake and vibration effects
-            gameContainer.classList.add('shake');
-            document.body.classList.add('vibrate');
-            
-            finalScoreDisplay.textContent = score;
-            gameOverScreen.style.display = 'block';
-            
-            // Remove effects after animation completes
-            setTimeout(() => {
-                gameContainer.classList.remove('shake');
-                document.body.classList.remove('vibrate');
-            }, 1000);
+            isGameOver = true;
+            clearInterval(obstacleInterval);
+            cancelAnimationFrame(animationFrame);
+            gameOverElement.style.display = 'block';
         }
-        
+
+        // Restart game
+        function restartGame() {
+            startBtn.style.display = 'block';
+            isGameStarted = false;
+        }
+
         // Event listeners
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'Space' || e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (!gameIsRunning && gameOverScreen.style.display !== 'block') {
-                    startGame();
-                } else {
-                    switchFloor();
-                }
+                jump();
+            }
+            
+            if (e.key === 'r' && isGameOver) {
+                restartGame();
             }
         });
-        
+
         gameContainer.addEventListener('click', () => {
-            if (gameIsRunning) {
-                switchFloor();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
-            }
+            jump();
         });
-        
-        // Touch events for mobile double tap
-        gameContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (gameIsRunning) {
-                switchFloor();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
-            }
-        });
-        
-        restartBtn.addEventListener('click', startGame);
-        
-        // Handle window resize and orientation change
-        window.addEventListener('resize', initGameSize);
-        window.addEventListener('orientationchange', initGameSize);
-        
-        // Initialize
-        initGameSize();
+
+        startBtn.addEventListener('click', startGame);
     </script>
 </body>
 </html>
