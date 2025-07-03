@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Space Balance</title>
+    <title>Precision Balance</title>
+    <!-- Favicon Links -->
+    <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
+    <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://iili.io/FIAXDDF.png">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         
         body {
-            background: #000;
+            margin: 0;
+            padding: 0;
+            background: #111;
             font-family: Arial, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
@@ -29,7 +34,7 @@
         
         #game-container {
             position: relative;
-            background: #111;
+            background: #000;
             border: 3px solid #444;
             border-radius: 5px;
             overflow: hidden;
@@ -39,7 +44,7 @@
         @media (max-width: 768px), (orientation: portrait) {
             #game-container {
                 width: 90vw;
-                height: calc(90vw * 1.333);
+                height: calc(90vw * 1.333); /* 3:4 ratio */
                 max-height: 90vh;
             }
         }
@@ -48,28 +53,53 @@
         @media (min-width: 769px), (orientation: landscape) {
             #game-container {
                 height: 80vh;
-                width: calc(80vh * 1.5);
+                width: calc(80vh * 1.5); /* 3:2 ratio */
                 max-width: 90vw;
             }
         }
         
-        #ball {
+        #game-bg {
             position: absolute;
-            width: 40px;
-            height: 40px;
-            background: #FFD700;
-            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 0.5s ease;
+            background-image: url('NBG.png');
+        }
+        
+        #player {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: transparent;
             z-index: 10;
-            box-shadow: 0 0 20px #FFD700;
+            background-image: url('UQH.gif');
+            background-size: contain;
+            background-repeat: no-repeat;
             transition: top 0.1s ease-out;
         }
         
-        .floor {
+        .obstacle {
+            position: absolute;
+            z-index: 5;
+            background: #FF5555;
+        }
+        
+        .spike.horizontal {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        
+        .spike.vertical {
+            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+        }
+        
+        #top-floor, #bottom-floor {
             position: absolute;
             width: 100%;
             height: 20px;
-            background: rgba(255, 85, 85, 0.8);
-            z-index: 5;
+            background: rgba(51, 51, 51, 0.7);
+            z-index: 3;
         }
         
         #top-floor {
@@ -82,7 +112,7 @@
         
         #score-display {
             position: absolute;
-            top: 20px;
+            top: 40px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 28px;
@@ -121,39 +151,71 @@
             margin-top: 15px;
         }
         
-        .stars {
+        .score-popup {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
+            font-size: 24px;
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+            animation: scorePopup 1s forwards;
+            z-index: 25;
+            pointer-events: none;
         }
         
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
+        @keyframes scorePopup {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
         }
         
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
         
-        .floating {
-            animation: float 2s infinite ease-in-out;
+        @keyframes shake {
+            10%, 90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+            
+            20%, 80% {
+                transform: translate3d(2px, 0, 0);
+            }
+            
+            30%, 50%, 70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+            
+            40%, 60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+        
+        .vibrate {
+            animation: vibrate 0.3s linear infinite;
+        }
+        
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
     </style>
 </head>
 <body>
     <div id="game-wrapper">
         <div id="game-container">
-            <div class="stars" id="stars"></div>
-            <div class="floor" id="top-floor"></div>
-            <div class="floor" id="bottom-floor"></div>
-            <div id="ball" class="floating"></div>
+            <div id="game-bg"></div>
+            <div id="top-floor"></div>
+            <div id="bottom-floor"></div>
+            <div id="player"></div>
             <div id="score-display">0</div>
             <div id="game-over">
                 <h2>Game Over!</h2>
@@ -165,73 +227,91 @@
 
     <script>
         // Game elements
-        const ball = document.getElementById('ball');
+        const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
+        const gameBg = document.getElementById('game-bg');
         const scoreDisplay = document.getElementById('score-display');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
-        const starsContainer = document.getElementById('stars');
         
         // Game variables
         let gameHeight, gameWidth;
-        let ballY;
-        let ballVelocity = 0;
+        let playerY, playerX = 50;
+        let playerVelocity = 0;
         let gameIsRunning = false;
         let score = 0;
-        let gravity = 0.4;
-        let liftForce = -8;
+        let obstacles = [];
+        let lastObstacleTime = 0;
+        let animationId;
+        const gravity = 0.4;
+        const liftForce = -8;
         let speedMultiplier = 1;
         let sensitivityMultiplier = 1;
-        let animationId;
         let lastTapTime = 0;
-        
-        // Create stars background
-        function createStars() {
-            starsContainer.innerHTML = '';
-            const starCount = 100;
-            
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.opacity = Math.random();
-                star.style.width = `${Math.random() * 3 + 1}px`;
-                star.style.height = star.style.width;
-                starsContainer.appendChild(star);
-            }
-        }
+        let backgroundChanged = false;
         
         // Initialize game dimensions
         function initGameSize() {
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
-            ballY = gameHeight / 2 - 20;
-            ball.style.top = ballY + 'px';
-            ball.style.left = (gameWidth / 2 - 20) + 'px';
+            playerY = gameHeight / 2 - 22.5; // Start in middle
+            playerX = 50;
+            player.style.top = playerY + 'px';
+            player.style.left = playerX + 'px';
+        }
+        
+        // Change background to DBG.png (only once at 100 score)
+        function changeBackground() {
+            if (backgroundChanged) return;
+            backgroundChanged = true;
+            
+            gameBg.style.opacity = 0;
+            
+            setTimeout(() => {
+                gameBg.style.backgroundImage = "url('DBG.png')";
+                gameBg.style.opacity = 1;
+            }, 500);
+        }
+        
+        // Check if background should change (only at 100 score)
+        function checkBackgroundChange() {
+            if (score >= 100 && !backgroundChanged) {
+                changeBackground();
+            }
         }
         
         // Initialize game
         function init() {
             initGameSize();
-            createStars();
-            ballY = gameHeight / 2 - 20;
-            ballVelocity = 0;
+            playerY = gameHeight / 2 - 22.5;
+            playerVelocity = 0;
             score = 0;
             speedMultiplier = 1;
             sensitivityMultiplier = 1;
             scoreDisplay.textContent = "0";
+            backgroundChanged = false;
+            gameBg.style.backgroundImage = "url('NBG.png')";
+            gameBg.style.opacity = 1;
             
-            // Reset ball position
-            ball.style.top = ballY + 'px';
-            ball.style.left = (gameWidth / 2 - 20) + 'px';
+            // Clear all obstacles
+            obstacles.forEach(obstacle => {
+                if (obstacle.element.parentNode) {
+                    gameContainer.removeChild(obstacle.element);
+                }
+            });
+            obstacles = [];
+            
+            // Reset player position
+            playerY = gameHeight / 2 - 22.5;
+            player.style.top = playerY + 'px';
+            player.style.left = playerX + 'px';
             
             // Hide game over screen
             gameOverScreen.style.display = 'none';
         }
         
-        // Apply tap force to the ball
+        // Apply tap force to the player
         function applyTapForce() {
             const now = Date.now();
             
@@ -240,13 +320,14 @@
             lastTapTime = now;
             
             // Apply upward force based on current sensitivity
-            ballVelocity = liftForce * sensitivityMultiplier;
+            playerVelocity = liftForce * sensitivityMultiplier;
         }
         
         // Start game
         function startGame() {
             init();
             gameIsRunning = true;
+            lastObstacleTime = Date.now();
             gameLoop();
         }
         
@@ -262,42 +343,121 @@
         
         // Update game state
         function update() {
-            // Apply gravity (increased by speed multiplier)
-            ballVelocity += gravity * speedMultiplier;
-            ballY += ballVelocity;
+            const currentTime = Date.now();
             
-            // Check for collisions with floors
-            if (ballY <= 20) { // Top floor collision
+            // Apply physics
+            playerVelocity += gravity * speedMultiplier;
+            playerY += playerVelocity;
+            
+            // Generate new obstacles
+            if (currentTime - lastObstacleTime > 1500) {
+                createObstacle();
+                lastObstacleTime = currentTime;
+            }
+            
+            // Check for floor collisions
+            if (playerY <= 20) { // Top floor collision
                 gameOver();
                 return;
             }
             
-            if (ballY >= gameHeight - 60) { // Bottom floor collision
+            if (playerY >= gameHeight - 65) { // Bottom floor collision
                 gameOver();
                 return;
             }
             
-            // Increase score based on time survived
-            score += 0.1;
-            scoreDisplay.textContent = Math.floor(score);
+            // Move obstacles and check for collisions
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                const obstacleX = parseFloat(obstacle.element.style.left);
+                const obstacleY = parseFloat(obstacle.element.style.top);
+                const obstacleWidth = parseFloat(obstacle.element.style.width);
+                const obstacleHeight = parseFloat(obstacle.element.style.height);
+                
+                // Move obstacle at current speed
+                obstacle.element.style.left = (obstacleX - 4 * speedMultiplier) + 'px';
+                
+                // Check for collision with player
+                if (
+                    playerX < obstacleX + obstacleWidth &&
+                    playerX + 45 > obstacleX &&
+                    playerY < obstacleY + obstacleHeight &&
+                    playerY + 45 > obstacleY
+                ) {
+                    gameOver();
+                    return;
+                }
+                
+                // Remove obstacles that are off screen
+                if (obstacleX < -100) {
+                    gameContainer.removeChild(obstacle.element);
+                    obstacles.splice(i, 1);
+                    increaseScore();
+                    checkBackgroundChange();
+                }
+            }
+        }
+        
+        // Create a single obstacle
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle spike horizontal';
             
-            // Increase difficulty
-            speedMultiplier = 1 + (score * 0.0005);
-            sensitivityMultiplier = 1 + (score * 0.00025);
+            let width = 30, height = 30;
+            let y;
+            let x = gameWidth;
+            
+            // Alternate between top and bottom
+            const position = Math.random() > 0.5 ? 'top' : 'bottom';
+            
+            if (position === 'top') {
+                y = 20;
+            } else {
+                y = gameHeight - height - 20;
+            }
+            
+            obstacle.style.left = x + 'px';
+            obstacle.style.width = width + 'px';
+            obstacle.style.height = height + 'px';
+            obstacle.style.top = y + 'px';
+            
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                width: width,
+                height: height,
+                y: y,
+                position: position
+            });
         }
         
-        // Render game
-        function render() {
-            ball.style.top = ballY + 'px';
+        // Increase score
+        function increaseScore() {
+            score++;
+            scoreDisplay.textContent = score;
+            // Increase speed and sensitivity multipliers
+            speedMultiplier = 1 + (score * 0.05);
+            sensitivityMultiplier = 1 + (score * 0.025);
         }
         
-        // End the game
+        // End the game with screen shake and vibration
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
             
-            finalScoreDisplay.textContent = Math.floor(score);
+            // Add screen shake and vibration effects
+            gameContainer.classList.add('shake');
+            document.body.classList.add('vibrate');
+            
+            finalScoreDisplay.textContent = score;
             gameOverScreen.style.display = 'block';
+            
+            // Remove effects after animation completes
+            setTimeout(() => {
+                gameContainer.classList.remove('shake');
+                document.body.classList.remove('vibrate');
+            }, 1000);
         }
         
         // Event listeners
@@ -337,7 +497,6 @@
         
         // Initialize
         initGameSize();
-        createStars();
     </script>
 </body>
 </html>
