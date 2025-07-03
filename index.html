@@ -334,6 +334,31 @@
             text-align: center;
             margin: 10px 0;
         }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 40;
+            color: white;
+        }
+        
+        #start-btn {
+            background: #00FF00;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -348,6 +373,12 @@
                 <h2>Game Over!</h2>
                 <p>Score: <span id="final-score">0</span></p>
                 <button id="restart-btn">Play Again</button>
+            </div>
+            <div id="start-screen">
+                <h1>Physical Response</h1>
+                <p>Tap to keep the ball in the air!</p>
+                <p>Avoid touching the floors or spikes</p>
+                <button id="start-btn">Start Game</button>
             </div>
         </div>
     </div>
@@ -393,6 +424,8 @@
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
         
         // Challenge elements
         const challengeContainer = document.getElementById('challenge-container');
@@ -414,7 +447,6 @@
         let isShowingChallenge = false;
         let currentChallenge = null;
         let backgroundChanged = false;
-        let lastObstaclePosition = 'bottom';
         
         // Physics variables
         let playerVelocity = 0;
@@ -422,7 +454,7 @@
         let tapForce = -8;
         let tapForceMultiplier = 1;
         let isTapping = false;
-        let tapInterval;
+        let lastTapTime = 0;
         
         // Initialize game dimensions
         function initGameSize() {
@@ -462,10 +494,10 @@
             scoreDisplay.textContent = "0";
             currentChallenge = null;
             backgroundChanged = false;
-            lastObstaclePosition = 'bottom';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             playerVelocity = 0;
+            playerY = gameHeight / 2;
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -476,7 +508,6 @@
             obstacles = [];
             
             // Reset player position
-            playerY = gameHeight / 2;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
@@ -484,9 +515,6 @@
             gameOverScreen.style.display = 'none';
             challengeContainer.style.display = 'none';
             isShowingChallenge = false;
-            
-            // Clear any existing tap interval
-            clearInterval(tapInterval);
             isTapping = false;
         }
         
@@ -500,6 +528,7 @@
             init();
             gameIsRunning = true;
             lastObstacleTime = Date.now();
+            startScreen.style.display = 'none';
             gameLoop();
         }
         
@@ -533,7 +562,7 @@
             }
             
             // Generate new obstacles
-            if (currentTime - lastObstacleTime > 2000 && obstacles.length < 2) {
+            if (currentTime - lastObstacleTime > 1500 && obstacles.length < 2) {
                 createObstacle();
                 lastObstacleTime = currentTime;
             }
@@ -556,17 +585,8 @@
                     playerY < obstacleY + obstacleHeight &&
                     playerY + 45 > obstacleY
                 ) {
-                    setTimeout(() => {
-                        if (!isShowingChallenge) {
-                            // Only show challenge if score >= 100
-                            if (score >= 100) {
-                                gameOver();
-                                showRandomChallenge();
-                            } else {
-                                gameOver();
-                            }
-                        }
-                    }, 100);
+                    gameOver();
+                    return;
                 }
                 
                 // Remove obstacles that are off screen
@@ -607,12 +627,14 @@
             let x = gameWidth;
             
             // Random position (top, middle, or bottom)
-            const position = Math.random() > 0.5 ? 'top' : 'bottom';
+            const position = Math.floor(Math.random() * 3); // 0, 1, or 2
             
-            if (position === 'top') {
-                y = 20 + Math.random() * (gameHeight / 3);
-            } else {
-                y = gameHeight - height - 20 - Math.random() * (gameHeight / 3);
+            if (position === 0) { // Top
+                y = 20 + Math.random() * 100;
+            } else if (position === 1) { // Middle
+                y = gameHeight / 2 - height / 2;
+            } else { // Bottom
+                y = gameHeight - height - 20 - Math.random() * 100;
             }
             
             obstacle.style.left = x + 'px';
@@ -626,30 +648,17 @@
                 element: obstacle,
                 width: width,
                 height: height,
-                y: y,
-                position: position
+                y: y
             });
         }
         
         // Apply tap force to player
         function applyTapForce() {
+            if (!gameIsRunning) return;
+            
             playerVelocity = tapForce * tapForceMultiplier;
             playJumpSound();
-        }
-        
-        // Start continuous tapping
-        function startTapping() {
-            if (!isTapping) {
-                isTapping = true;
-                applyTapForce(); // Apply immediately
-                tapInterval = setInterval(applyTapForce, 100); // Apply every 100ms
-            }
-        }
-        
-        // Stop continuous tapping
-        function stopTapping() {
-            isTapping = false;
-            clearInterval(tapInterval);
+            lastTapTime = Date.now();
         }
         
         // Increase score and adjust difficulty
@@ -668,7 +677,6 @@
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
-            stopTapping();
             
             // Add screen shake and vibration effects
             gameContainer.classList.add('shake');
@@ -682,6 +690,13 @@
                 gameContainer.classList.remove('shake');
                 document.body.classList.remove('vibrate');
             }, 1000);
+            
+            // Only show challenge if score >= 100
+            if (score >= 100) {
+                setTimeout(() => {
+                    showRandomChallenge();
+                }, 1000);
+            }
         }
         
         // Show random challenge
@@ -927,16 +942,14 @@
             currentChallenge = null;
             gameIsRunning = true;
             lastObstacleTime = Date.now();
+            playerY = gameHeight / 2;
+            playerVelocity = 0;
             gameLoop();
         }
         
         // Event listeners
-        gameContainer.addEventListener('mousedown', startTapping);
-        gameContainer.addEventListener('touchstart', startTapping);
-        
-        gameContainer.addEventListener('mouseup', stopTapping);
-        gameContainer.addEventListener('mouseleave', stopTapping);
-        gameContainer.addEventListener('touchend', stopTapping);
+        gameContainer.addEventListener('mousedown', applyTapForce);
+        gameContainer.addEventListener('touchstart', applyTapForce);
         
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
@@ -950,6 +963,7 @@
         });
         
         restartBtn.addEventListener('click', startGame);
+        startBtn.addEventListener('click', startGame);
         closeChallenge.addEventListener('click', () => {
             clearInterval(memoryTimerInterval);
             clearInterval(mathTimerInterval);
