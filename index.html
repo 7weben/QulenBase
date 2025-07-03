@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Precision Balance</title>
+    <title>Physical Response</title>
     <!-- Favicon Links -->
     <link rel="icon" href="https://iili.io/FIAXDDF.png" type="image/png">
     <link rel="shortcut icon" href="https://iili.io/FIAXDDF.png" type="image/png">
@@ -77,7 +77,8 @@
             background-image: url('UQH.gif');
             background-size: contain;
             background-repeat: no-repeat;
-            transition: top 0.1s ease-out;
+            transform: scaleX(-1);
+            transition: top 0.15s ease;
         }
         
         .obstacle {
@@ -151,6 +152,126 @@
             margin-top: 15px;
         }
         
+        /* Challenge Popup Styles */
+        #challenge-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #challenge-popup {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        #close-challenge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        #challenge-popup h2 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        /* Memory Game Styles */
+        #memory-game {
+            display: none;
+        }
+        
+        .memory-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px auto;
+        }
+        
+        .memory-card {
+            width: 60px;
+            height: 60px;
+            background: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .memory-card.flipped {
+            background: #666;
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .memory-card.matched {
+            background: #2ecc71;
+            cursor: default;
+        }
+        
+        /* Math Game Styles */
+        #math-game {
+            display: none;
+        }
+        
+        #math-problem {
+            font-size: 24px;
+            color: white;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        #math-answer {
+            padding: 8px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        #submit-math {
+            background: #00FF00;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        #challenge-result {
+            color: white;
+            margin: 10px 0;
+            min-height: 20px;
+            text-align: center;
+        }
+        
+        #timer {
+            color: #FF5555;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        /* Score Popup Styles */
         .score-popup {
             position: absolute;
             font-size: 24px;
@@ -207,6 +328,12 @@
             80% { transform: translate(2px, -2px); }
             100% { transform: translate(0); }
         }
+        
+        #math-progress {
+            color: white;
+            text-align: center;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -225,7 +352,39 @@
         </div>
     </div>
 
+    <!-- Challenge Popup -->
+    <div id="challenge-container">
+        <div id="challenge-popup">
+            <button id="close-challenge">✕</button>
+            <h2>Continue Challenge!</h2>
+            
+            <!-- Memory Game -->
+            <div id="memory-game">
+                <p id="challenge-result">Match all pairs in 15 seconds to continue!</p>
+                <div id="timer">Time left: 15</div>
+                <div class="memory-board" id="memory-board"></div>
+            </div>
+            
+            <!-- Math Game -->
+            <div id="math-game">
+                <p id="challenge-result">Solve 3 math problems in 15 seconds to continue!</p>
+                <div id="timer">Time left: 15</div>
+                <div id="math-problem"></div>
+                <input type="number" id="math-answer" placeholder="Your answer">
+                <button id="submit-math">Submit</button>
+                <div id="math-progress">Problems solved: 0/3</div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Simple Jump Sound Only
+        const playJumpSound = () => {
+            const jumpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3');
+            jumpSound.volume = 0.5;
+            jumpSound.play().catch(e => console.log("Jump sound play failed:", e));
+        };
+
         // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
@@ -235,28 +394,41 @@
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
         
+        // Challenge elements
+        const challengeContainer = document.getElementById('challenge-container');
+        const challengePopup = document.getElementById('challenge-popup');
+        const closeChallenge = document.getElementById('close-challenge');
+        const memoryGame = document.getElementById('memory-game');
+        const mathGame = document.getElementById('math-game');
+        
         // Game variables
         let gameHeight, gameWidth;
         let playerY, playerX = 50;
-        let playerVelocity = 0;
         let gameIsRunning = false;
         let score = 0;
         let obstacles = [];
         let lastObstacleTime = 0;
         let animationId;
-        const gravity = 0.4;
-        const liftForce = -8;
-        let speedMultiplier = 1;
-        let sensitivityMultiplier = 1;
-        let lastTapTime = 0;
+        const baseSpeed = 6;
+        let currentSpeedMultiplier = 1;
+        let isShowingChallenge = false;
+        let currentChallenge = null;
         let backgroundChanged = false;
+        let lastObstaclePosition = 'bottom';
+        
+        // Physics variables
+        let playerVelocity = 0;
+        let gravity = 0.5;
+        let tapForce = -8;
+        let tapForceMultiplier = 1;
+        let isTapping = false;
+        let tapInterval;
         
         // Initialize game dimensions
         function initGameSize() {
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
-            playerY = gameHeight / 2 - 22.5; // Start in middle
-            playerX = 50;
+            playerY = gameHeight / 2;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
         }
@@ -284,15 +456,16 @@
         // Initialize game
         function init() {
             initGameSize();
-            playerY = gameHeight / 2 - 22.5;
-            playerVelocity = 0;
             score = 0;
-            speedMultiplier = 1;
-            sensitivityMultiplier = 1;
+            currentSpeedMultiplier = 1;
+            tapForceMultiplier = 1;
             scoreDisplay.textContent = "0";
+            currentChallenge = null;
             backgroundChanged = false;
+            lastObstaclePosition = 'bottom';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
+            playerVelocity = 0;
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -303,24 +476,23 @@
             obstacles = [];
             
             // Reset player position
-            playerY = gameHeight / 2 - 22.5;
+            playerY = gameHeight / 2;
             player.style.top = playerY + 'px';
             player.style.left = playerX + 'px';
             
             // Hide game over screen
             gameOverScreen.style.display = 'none';
+            challengeContainer.style.display = 'none';
+            isShowingChallenge = false;
+            
+            // Clear any existing tap interval
+            clearInterval(tapInterval);
+            isTapping = false;
         }
         
-        // Apply tap force to the player
-        function applyTapForce() {
-            const now = Date.now();
-            
-            // Prevent too rapid taps (minimum 100ms between taps)
-            if (now - lastTapTime < 100) return;
-            lastTapTime = now;
-            
-            // Apply upward force based on current sensitivity
-            playerVelocity = liftForce * sensitivityMultiplier;
+        // Calculate current speed
+        function getCurrentSpeed() {
+            return baseSpeed * currentSpeedMultiplier;
         }
         
         // Start game
@@ -345,25 +517,25 @@
         function update() {
             const currentTime = Date.now();
             
-            // Apply physics
-            playerVelocity += gravity * speedMultiplier;
+            // Apply gravity
+            playerVelocity += gravity;
             playerY += playerVelocity;
             
+            // Check floor collisions
+            if (playerY + 45 >= gameHeight - 20) { // Bottom floor
+                gameOver();
+                return;
+            }
+            
+            if (playerY <= 20) { // Top floor
+                gameOver();
+                return;
+            }
+            
             // Generate new obstacles
-            if (currentTime - lastObstacleTime > 1500) {
+            if (currentTime - lastObstacleTime > 2000 && obstacles.length < 2) {
                 createObstacle();
                 lastObstacleTime = currentTime;
-            }
-            
-            // Check for floor collisions
-            if (playerY <= 20) { // Top floor collision
-                gameOver();
-                return;
-            }
-            
-            if (playerY >= gameHeight - 65) { // Bottom floor collision
-                gameOver();
-                return;
             }
             
             // Move obstacles and check for collisions
@@ -375,7 +547,7 @@
                 const obstacleHeight = parseFloat(obstacle.element.style.height);
                 
                 // Move obstacle at current speed
-                obstacle.element.style.left = (obstacleX - 4 * speedMultiplier) + 'px';
+                obstacle.element.style.left = (obstacleX - getCurrentSpeed()) + 'px';
                 
                 // Check for collision with player
                 if (
@@ -384,8 +556,17 @@
                     playerY < obstacleY + obstacleHeight &&
                     playerY + 45 > obstacleY
                 ) {
-                    gameOver();
-                    return;
+                    setTimeout(() => {
+                        if (!isShowingChallenge) {
+                            // Only show challenge if score >= 100
+                            if (score >= 100) {
+                                gameOver();
+                                showRandomChallenge();
+                            } else {
+                                gameOver();
+                            }
+                        }
+                    }, 100);
                 }
                 
                 // Remove obstacles that are off screen
@@ -393,9 +574,27 @@
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
                     increaseScore();
+                    createScorePopup(obstacleX + obstacleWidth/2, obstacleY + obstacleHeight/2);
                     checkBackgroundChange();
                 }
             }
+        }
+        
+        // Create a score popup effect
+        function createScorePopup(x, y) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+1';
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            gameContainer.appendChild(popup);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    gameContainer.removeChild(popup);
+                }
+            }, 1000);
         }
         
         // Create a single obstacle
@@ -407,13 +606,13 @@
             let y;
             let x = gameWidth;
             
-            // Alternate between top and bottom
+            // Random position (top, middle, or bottom)
             const position = Math.random() > 0.5 ? 'top' : 'bottom';
             
             if (position === 'top') {
-                y = 20;
+                y = 20 + Math.random() * (gameHeight / 3);
             } else {
-                y = gameHeight - height - 20;
+                y = gameHeight - height - 20 - Math.random() * (gameHeight / 3);
             }
             
             obstacle.style.left = x + 'px';
@@ -432,19 +631,44 @@
             });
         }
         
-        // Increase score
+        // Apply tap force to player
+        function applyTapForce() {
+            playerVelocity = tapForce * tapForceMultiplier;
+            playJumpSound();
+        }
+        
+        // Start continuous tapping
+        function startTapping() {
+            if (!isTapping) {
+                isTapping = true;
+                applyTapForce(); // Apply immediately
+                tapInterval = setInterval(applyTapForce, 100); // Apply every 100ms
+            }
+        }
+        
+        // Stop continuous tapping
+        function stopTapping() {
+            isTapping = false;
+            clearInterval(tapInterval);
+        }
+        
+        // Increase score and adjust difficulty
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            // Increase speed and sensitivity multipliers
-            speedMultiplier = 1 + (score * 0.05);
-            sensitivityMultiplier = 1 + (score * 0.025);
+            
+            // Increase speed multiplier (0.05x per score)
+            currentSpeedMultiplier = 1 + (score * 0.05);
+            
+            // Increase tap sensitivity (0.025x per score)
+            tapForceMultiplier = 1 + (score * 0.025);
         }
         
         // End the game with screen shake and vibration
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
+            stopTapping();
             
             // Add screen shake and vibration effects
             gameContainer.classList.add('shake');
@@ -460,36 +684,287 @@
             }, 1000);
         }
         
-        // Event listeners
-        gameContainer.addEventListener('click', () => {
-            if (gameIsRunning) {
-                applyTapForce();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
+        // Show random challenge
+        function showRandomChallenge() {
+            isShowingChallenge = true;
+            gameOverScreen.style.display = 'none';
+            challengeContainer.style.display = 'flex';
+            
+            if (Math.random() > 0.5) {
+                currentChallenge = 'memory';
+                memoryGame.style.display = 'block';
+                mathGame.style.display = 'none';
+                startMemoryGame();
+            } else {
+                currentChallenge = 'math';
+                memoryGame.style.display = 'none';
+                mathGame.style.display = 'block';
+                startMathGame();
             }
-        });
+        }
         
-        gameContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (gameIsRunning) {
-                applyTapForce();
-            } else if (gameOverScreen.style.display !== 'block') {
-                startGame();
+        /* ===== MEMORY GAME ===== */
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let memoryTimer = 15;
+        let memoryTimerInterval;
+        const memorySymbols = ['🍎', '🍌', '🍒', '🍓', '🍊', '🍋', '🍐', '🍉'];
+        
+        function startMemoryGame() {
+            resetMemoryGame();
+            startMemoryTimer();
+        }
+        
+        function resetMemoryGame() {
+            const memoryBoard = document.getElementById('memory-board');
+            memoryBoard.innerHTML = '';
+            memoryCards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            memoryTimer = 15;
+            document.getElementById('timer').textContent = "Time left: 15";
+            document.getElementById('challenge-result').textContent = "Match all pairs in 15 seconds to continue!";
+            
+            // Create pairs of symbols
+            const symbols = [...memorySymbols, ...memorySymbols];
+            
+            // Shuffle symbols
+            for (let i = symbols.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [symbols[i], symbols[j]] = [symbols[j], symbols[i]];
             }
-        });
+            
+            // Create cards
+            for (let i = 0; i < symbols.length; i++) {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.index = i;
+                card.dataset.symbol = symbols[i];
+                card.textContent = symbols[i];
+                card.addEventListener('click', flipCard);
+                memoryBoard.appendChild(card);
+                memoryCards.push(card);
+            }
+            
+            // Initially hide all cards
+            setTimeout(() => {
+                memoryCards.forEach(card => {
+                    card.textContent = '';
+                    card.style.backgroundColor = '#444';
+                });
+            }, 1000);
+        }
+        
+        function startMemoryTimer() {
+            clearInterval(memoryTimerInterval);
+            memoryTimerInterval = setInterval(() => {
+                memoryTimer--;
+                document.getElementById('timer').textContent = `Time left: ${memoryTimer}`;
+                
+                if (memoryTimer <= 0) {
+                    clearInterval(memoryTimerInterval);
+                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        gameOverScreen.style.display = 'block';
+                        isShowingChallenge = false;
+                    }, 1500);
+                }
+            }, 1000);
+        }
+        
+        function flipCard() {
+            // Don't allow flipping if already flipped or matched
+            if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
+            
+            // Don't allow more than 2 cards flipped at once
+            if (flippedCards.length >= 2) return;
+            
+            // Flip the card
+            this.classList.add('flipped');
+            this.textContent = this.dataset.symbol;
+            flippedCards.push(this);
+            
+            // Check for match if two cards are flipped
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        }
+        
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            
+            if (card1.dataset.symbol === card2.dataset.symbol) {
+                // Match found
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                flippedCards = [];
+                matchedPairs++;
+                
+                // Check if all pairs are matched
+                if (matchedPairs === memorySymbols.length) {
+                    clearInterval(memoryTimerInterval);
+                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        continueAfterChallenge();
+                    }, 1500);
+                }
+            } else {
+                // No match - flip back after delay
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.textContent = '';
+                    card2.textContent = '';
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+        
+        /* ===== MATH GAME ===== */
+        let mathProblems = [];
+        let currentProblem = 0;
+        let problemsSolved = 0;
+        let mathTimer = 15;
+        let mathTimerInterval;
+        
+        function startMathGame() {
+            resetMathGame();
+            startMathTimer();
+            if (window.innerWidth > 768) {
+                document.getElementById('math-answer').focus();
+            }
+        }
+        
+        function resetMathGame() {
+            mathProblems = [];
+            currentProblem = 0;
+            problemsSolved = 0;
+            mathTimer = 15;
+            document.getElementById('timer').textContent = "Time left: 15";
+            document.getElementById('challenge-result').textContent = "Solve 3 math problems in 15 seconds to continue!";
+            document.getElementById('math-progress').textContent = "Problems solved: 0/3";
+            
+            // Generate 3 random math problems
+            for (let i = 0; i < 3; i++) {
+                const a = Math.floor(Math.random() * 10) + 1;
+                const b = Math.floor(Math.random() * 10) + 1;
+                const operators = ['+', '-', '*'];
+                const op = operators[Math.floor(Math.random() * operators.length)];
+                
+                let answer;
+                switch (op) {
+                    case '+': answer = a + b; break;
+                    case '-': answer = a - b; break;
+                    case '*': answer = a * b; break;
+                }
+                
+                mathProblems.push({
+                    problem: `${a} ${op} ${b}`,
+                    answer: answer
+                });
+            }
+            
+            displayCurrentProblem();
+        }
+        
+        function displayCurrentProblem() {
+            document.getElementById('math-problem').textContent = mathProblems[currentProblem].problem;
+            document.getElementById('math-answer').value = '';
+        }
+        
+        function startMathTimer() {
+            clearInterval(mathTimerInterval);
+            mathTimerInterval = setInterval(() => {
+                mathTimer--;
+                document.getElementById('timer').textContent = `Time left: ${mathTimer}`;
+                
+                if (mathTimer <= 0) {
+                    clearInterval(mathTimerInterval);
+                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        gameOverScreen.style.display = 'block';
+                        isShowingChallenge = false;
+                    }, 1500);
+                }
+            }, 1000);
+        }
+        
+        function checkMathAnswer() {
+            const userAnswer = parseInt(document.getElementById('math-answer').value);
+            const correctAnswer = mathProblems[currentProblem].answer;
+            
+            if (userAnswer === correctAnswer) {
+                problemsSolved++;
+                document.getElementById('math-progress').textContent = `Problems solved: ${problemsSolved}/3`;
+                
+                if (problemsSolved >= 3) {
+                    clearInterval(mathTimerInterval);
+                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
+                    
+                    setTimeout(() => {
+                        challengeContainer.style.display = 'none';
+                        continueAfterChallenge();
+                    }, 1500);
+                } else {
+                    currentProblem++;
+                    displayCurrentProblem();
+                }
+            } else {
+                document.getElementById('challenge-result').textContent = "Wrong answer! Try again.";
+                document.getElementById('math-answer').value = '';
+            }
+        }
+        
+        function continueAfterChallenge() {
+            isShowingChallenge = false;
+            currentChallenge = null;
+            gameIsRunning = true;
+            lastObstacleTime = Date.now();
+            gameLoop();
+        }
+        
+        // Event listeners
+        gameContainer.addEventListener('mousedown', startTapping);
+        gameContainer.addEventListener('touchstart', startTapping);
+        
+        gameContainer.addEventListener('mouseup', stopTapping);
+        gameContainer.addEventListener('mouseleave', stopTapping);
+        gameContainer.addEventListener('touchend', stopTapping);
         
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                if (gameIsRunning) {
-                    applyTapForce();
-                } else if (gameOverScreen.style.display !== 'block') {
+                if (!gameIsRunning && gameOverScreen.style.display !== 'block') {
                     startGame();
+                } else {
+                    applyTapForce();
                 }
             }
         });
         
         restartBtn.addEventListener('click', startGame);
+        closeChallenge.addEventListener('click', () => {
+            clearInterval(memoryTimerInterval);
+            clearInterval(mathTimerInterval);
+            challengeContainer.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            isShowingChallenge = false;
+        });
+        
+        // Math game event listeners
+        document.getElementById('submit-math').addEventListener('click', checkMathAnswer);
+        document.getElementById('math-answer').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkMathAnswer();
+            }
+        });
         
         // Handle window resize and orientation change
         window.addEventListener('resize', initGameSize);
