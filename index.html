@@ -17,8 +17,10 @@
         
         #game-container {
             position: relative;
-            width: 800px;
-            height: 400px;
+            width: 75vw;
+            height: 100vw; /* 4:3 aspect ratio */
+            max-width: 800px;
+            max-height: 1066.67px; /* 800 * 4/3 */
             overflow: hidden;
             background: url('NBG.png');
             background-size: cover;
@@ -32,6 +34,7 @@
             height: 40px;
             background: url('UQH.gif');
             background-size: cover;
+            transform: scaleX(-1); /* Flip horizontally */
             z-index: 10;
         }
         
@@ -65,6 +68,7 @@
             font-size: 24px;
             color: white;
             z-index: 20;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         
         #game-over {
@@ -130,6 +134,15 @@
             font-size: 20px;
             cursor: pointer;
         }
+
+        @media (min-aspect-ratio: 3/4) {
+            #game-container {
+                width: 100vh;
+                height: 133.33vh; /* 4:3 aspect ratio */
+                max-width: 800px;
+                max-height: 1066.67px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -194,7 +207,7 @@
         let currentGameSpeed = baseGameSpeed;
         let levelLength = 10000; // px
         let distanceTraveled = 0;
-        let isMusicOn = false;
+        let isMusicOn = true; // Changed to true by default
         let isJumping = false;
         let passedObstacles = new Set();
         
@@ -206,7 +219,7 @@
             score = 0;
             distanceTraveled = 0;
             currentGameSpeed = baseGameSpeed;
-            scoreDisplay.textContent = "Score: 0";
+            scoreDisplay.textContent = "Score: " + score;
             passedObstacles = new Set();
             
             // Clear all obstacles
@@ -229,7 +242,10 @@
             gameIsRunning = true;
             startScreen.style.display = 'none';
             lastObstacleTime = Date.now();
-            if (isMusicOn) gameMusic.play();
+            if (isMusicOn) {
+                gameMusic.currentTime = 0;
+                gameMusic.play().catch(e => console.log("Audio play failed:", e));
+            }
             gameLoop();
         }
         
@@ -302,8 +318,17 @@
                     playerY + 40 > obstacle.y && 
                     playerY < obstacle.y + obstacle.height
                 ) {
-                    if (isMusicOn) deathSound.play();
-                    gameOver();
+                    // Only die if hitting spikes or sides of blocks (not when landing on top)
+                    if (obstacle.element.classList.contains('spike') || 
+                        (playerY + 40 < obstacle.y + obstacle.height - 5)) {
+                        if (isMusicOn) deathSound.play();
+                        gameOver();
+                    } else {
+                        // Land on top of block
+                        playerY = obstacle.y - 40;
+                        velocity = 0;
+                        isJumping = false;
+                    }
                 }
                 
                 // Remove obstacles that are off screen
@@ -366,7 +391,10 @@
             if (!gameIsRunning || isJumping) return;
             velocity = jumpForce;
             isJumping = true;
-            if (isMusicOn) jumpSound.play();
+            if (isMusicOn) {
+                jumpSound.currentTime = 0;
+                jumpSound.play().catch(e => console.log("Jump sound failed:", e));
+            }
         }
         
         // End the game
@@ -390,11 +418,12 @@
             isMusicOn = !isMusicOn;
             musicToggle.textContent = isMusicOn ? "🔊" : "🔇";
             
-            if (isMusicOn && gameIsRunning) {
-                gameMusic.play();
+            if (isMusicOn) {
+                if (gameIsRunning) {
+                    gameMusic.play().catch(e => console.log("Music play failed:", e));
+                }
             } else {
                 gameMusic.pause();
-                gameMusic.currentTime = 0;
             }
         }
         
@@ -407,6 +436,7 @@
                 } else {
                     jump();
                 }
+                e.preventDefault(); // Prevent spacebar from scrolling page
             }
         });
         
@@ -434,6 +464,9 @@
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
         });
+
+        // Initialize music button state
+        musicToggle.textContent = isMusicOn ? "🔊" : "🔇";
     </script>
 </body>
 </html>
