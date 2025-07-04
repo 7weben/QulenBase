@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Geometry Dash Lite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             margin: 0;
@@ -13,6 +14,7 @@
             background: #222;
             font-family: Arial, sans-serif;
             overflow: hidden;
+            touch-action: manipulation;
         }
         
         #game-container {
@@ -28,8 +30,8 @@
         
         #player {
             position: absolute;
-            width: 45px;
-            height: 45px;
+            width: 60px;
+            height: 60px;
             background-image: url('UQH.gif');
             background-size: contain;
             transform: scaleX(-1);
@@ -47,21 +49,21 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 20px;
+            height: 30px;
             background: #555;
             z-index: 3;
         }
         
         #score-display {
             position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 24px;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
             color: white;
             z-index: 20;
             background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 15px;
+            border-radius: 8px;
         }
         
         #game-over {
@@ -71,21 +73,23 @@
             transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
             display: none;
             z-index: 30;
+            width: 70%;
+            max-width: 400px;
         }
         
         #restart-btn {
             background-color: #00FF00;
             border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 5px;
+            padding: 15px 30px;
+            font-size: 22px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         
         #start-screen {
@@ -106,26 +110,55 @@
         #start-btn {
             background-color: #00FF00;
             border: none;
-            padding: 15px 30px;
-            font-size: 24px;
-            border-radius: 5px;
+            padding: 20px 40px;
+            font-size: 28px;
+            border-radius: 10px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 30px;
         }
 
-        @media (orientation: portrait) {
+        @media (max-width: 768px) {
             #game-container {
-                width: 90vw;
-                height: 120vw; /* 3:4 aspect ratio */
-                max-height: 90vh;
+                width: 100vw;
+                height: 75vw; /* 4:3 aspect ratio */
+                max-height: 100vh;
+                max-width: 133.33vh; /* Maintain 4:3 ratio based on height */
+                border: none;
+                border-radius: 0;
             }
-        }
-
-        @media (orientation: landscape) {
-            #game-container {
-                width: 90vw;
-                height: 60vw; /* 3:2 aspect ratio */
-                max-height: 90vh;
+            
+            #player {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .obstacle {
+                border-radius: 8px;
+            }
+            
+            #ground {
+                height: 40px;
+            }
+            
+            #score-display {
+                font-size: 32px;
+                padding: 10px 20px;
+            }
+            
+            #game-over h2 {
+                font-size: 32px;
+            }
+            
+            #final-score {
+                font-size: 28px;
+            }
+            
+            #start-screen h1 {
+                font-size: 36px;
+            }
+            
+            #start-screen p {
+                font-size: 24px;
             }
         }
     </style>
@@ -142,7 +175,7 @@
         </div>
         <div id="start-screen">
             <h1>Geometry Dash Lite</h1>
-            <p>Press SPACE or click to jump</p>
+            <p>Press SPACE or tap to jump</p>
             <button id="start-btn">Start Game</button>
         </div>
     </div>
@@ -165,11 +198,11 @@
         
         let gameHeight = gameContainer.offsetHeight;
         let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 45 - 20; // 45 = player height, 20 = ground height
+        let playerY = gameHeight - 60 - 30; // 60 = player height, 30 = ground height
         let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
-        let jumpForce = -30; // Increased jump sensitivity (2x)
+        let jumpForce = -22.5; // 1.5x original (-15 * 1.5)
         let gameIsRunning = false;
         let score = 0;
         let obstacles = [];
@@ -181,10 +214,17 @@
         let distanceTraveled = 0;
         let isJumping = false;
         let lastObstaclePassed = null;
+        let isMobile = false;
+        
+        // Check if mobile device
+        function checkMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
         
         // Initialize game
         function init() {
-            playerY = gameHeight - 45 - 20;
+            isMobile = checkMobile();
+            playerY = gameHeight - (isMobile ? 80 : 60) - (isMobile ? 40 : 30);
             playerX = 50;
             velocity = 0;
             score = 0;
@@ -232,8 +272,8 @@
             playerY += velocity;
             
             // Check for collisions with ground
-            if (playerY > gameHeight - 45 - 20) { // 45 = player height, 20 = ground height
-                playerY = gameHeight - 45 - 20;
+            if (playerY > gameHeight - (isMobile ? 80 : 60) - (isMobile ? 40 : 30)) {
+                playerY = gameHeight - (isMobile ? 80 : 60) - (isMobile ? 40 : 30);
                 velocity = 0;
                 isJumping = false;
             }
@@ -276,9 +316,9 @@
                 
                 // Check for collision with player
                 if (
-                    playerX + 45 > obstacleX && 
+                    playerX + (isMobile ? 80 : 60) > obstacleX && 
                     playerX < obstacleX + obstacle.width && 
-                    playerY + 45 > obstacle.y && 
+                    playerY + (isMobile ? 80 : 60) > obstacle.y && 
                     playerY < obstacle.y + obstacle.height
                 ) {
                     gameOver();
@@ -302,14 +342,14 @@
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Fixed medium width
-            const width = 50;
+            // Fixed medium width (larger on mobile)
+            const width = isMobile ? 70 : 50;
             
-            // Random height (short, medium, tall)
-            const heightOptions = [60, 90, 120]; // Heights that are jumpable
+            // Random height (short, medium, tall) - larger on mobile
+            const heightOptions = isMobile ? [80, 120, 160] : [60, 90, 120];
             const height = heightOptions[Math.floor(Math.random() * heightOptions.length)];
             
-            const y = gameHeight - height - 20; // 20 = ground height
+            const y = gameHeight - height - (isMobile ? 40 : 30);
             
             obstacle.style.left = gameWidth + 'px';
             obstacle.style.width = width + 'px';
@@ -348,7 +388,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 if (!gameIsRunning && startScreen.style.display === 'none') {
-                    // Game over state - restart
                     startGame();
                 } else {
                     jump();
@@ -360,7 +399,6 @@
             if (gameIsRunning) {
                 jump();
             } else if (startScreen.style.display === 'none') {
-                // Game over state - restart
                 startGame();
             }
         });
@@ -378,6 +416,11 @@
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
         });
+        
+        // Initial mobile check
+        if (checkMobile()) {
+            document.querySelector('#start-screen p').textContent = "Tap to jump";
+        }
     </script>
 </body>
 </html>
