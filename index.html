@@ -32,7 +32,7 @@
             width: 40px;
             height: 40px;
             z-index: 10;
-            transform: scaleX(-1); /* Flip horizontally */
+            transform: scaleX(-1);
         }
         
         .obstacle {
@@ -160,6 +160,7 @@
         <div id="start-screen">
             <h1>Geometry Dash Lite</h1>
             <p>Press SPACE, UP ARROW, or CLICK to jump</p>
+            <p>Double-tap for higher jump!</p>
             <button id="start-btn">Start Game</button>
         </div>
     </div>
@@ -197,24 +198,27 @@
         
         let gameHeight = gameContainer.offsetHeight;
         let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 40 - 20; // 40 = player height, 20 = ground height
+        let playerY = gameHeight - 40 - 20;
         let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
-        let jumpForce = -12; // Reduced jump force
+        let normalJumpForce = -12;
+        let boostJumpForce = -18; // 1.5x normal jump
         let gameIsRunning = false;
         let gameIsPaused = false;
         let score = 0;
         let obstacles = [];
-        let obstacleFrequency = 1500; // milliseconds
+        let obstacleFrequency = 1500;
         let lastObstacleTime = 0;
         let animationId;
         let gameSpeed = 5;
-        let levelLength = 10000; // px
+        let levelLength = 10000;
         let distanceTraveled = 0;
         let isMusicOn = false;
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
+        let lastJumpTime = 0;
+        let canDoubleJump = false;
         
         // Initialize game
         function init() {
@@ -272,6 +276,7 @@
                 playerY = gameHeight - 40 - 20;
                 velocity = 0;
                 isJumping = false;
+                canDoubleJump = false;
             }
             
             // Check for collisions with ceiling
@@ -338,15 +343,16 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a new obstacle (slim blocks only)
+        // Create a new obstacle (shorter and slimmer)
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Slim obstacles (width between 20-40px)
-            const width = 20 + Math.random() * 20;
-            const height = 30 + Math.random() * 100;
-            const y = gameHeight - height - 20; // 20 = ground height
+            // Slim obstacles (width between 20-30px)
+            const width = 20 + Math.random() * 10;
+            // Shorter obstacles (height between 30-80px)
+            const height = 30 + Math.random() * 50;
+            const y = gameHeight - height - 20;
             
             obstacle.style.left = gameWidth + 'px';
             obstacle.style.width = width + 'px';
@@ -363,12 +369,29 @@
             });
         }
         
-        // Make the player jump (with reduced sensitivity)
-        function jump() {
-            if (!gameIsRunning || gameIsPaused || isJumping) return;
-            velocity = jumpForce;
-            isJumping = true;
-            if (isMusicOn) jumpSound.play();
+        // Make the player jump
+        function jump(boost = false) {
+            if (!gameIsRunning || gameIsPaused) return;
+            
+            const currentTime = Date.now();
+            const timeSinceLastJump = currentTime - lastJumpTime;
+            
+            // Check for double tap (within 300ms)
+            if (!isJumping && timeSinceLastJump < 300 && canDoubleJump) {
+                // Boosted jump
+                velocity = boostJumpForce;
+                canDoubleJump = false;
+                if (isMusicOn) jumpSound.play();
+            } 
+            // Normal jump if on ground
+            else if (!isJumping) {
+                velocity = normalJumpForce;
+                isJumping = true;
+                canDoubleJump = true;
+                if (isMusicOn) jumpSound.play();
+            }
+            
+            lastJumpTime = currentTime;
         }
         
         // Pause the game
@@ -432,7 +455,6 @@
                 }
             }
             
-            // Pause with Escape key
             if (e.key === 'Escape' && gameIsRunning) {
                 if (gameIsPaused) {
                     resumeGame();
