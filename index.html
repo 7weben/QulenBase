@@ -18,8 +18,8 @@
         
         #game-container {
             position: relative;
-            width: 800px;
-            height: 400px;
+            width: 600px; /* 3:4 aspect ratio */
+            height: 800px;
             overflow: hidden;
             background: url('NBG.png');
             background-size: cover;
@@ -114,7 +114,7 @@
         
         #music-toggle {
             position: absolute;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             z-index: 50;
             background: rgba(0, 0, 0, 0.5);
@@ -147,10 +147,10 @@
     <div id="game-container">
         <div id="player"><img src="UQH.gif" width="40" height="40"></div>
         <div id="ground"></div>
-        <div id="score-display">0%</div>
+        <div id="score-display">0</div>
         <div id="game-over">
             <h2>Game Over!</h2>
-            <p>Your progress: <span id="final-score">0%</span></p>
+            <p>Score: <span id="final-score">0</span></p>
             <button id="restart-btn">Play Again</button>
         </div>
         <div id="pause-screen">
@@ -160,7 +160,6 @@
         <div id="start-screen">
             <h1>Geometry Dash Lite</h1>
             <p>Press SPACE, UP ARROW, or CLICK to jump</p>
-            <p>Double-tap for higher jump!</p>
             <button id="start-btn">Start Game</button>
         </div>
     </div>
@@ -202,8 +201,7 @@
         let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
-        let normalJumpForce = -12;
-        let boostJumpForce = -18; // 1.5x normal jump
+        let jumpForce = -16; // Increased jump height (2x original)
         let gameIsRunning = false;
         let gameIsPaused = false;
         let score = 0;
@@ -217,8 +215,6 @@
         let isMusicOn = false;
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
-        let lastJumpTime = 0;
-        let canDoubleJump = false;
         
         // Initialize game
         function init() {
@@ -227,7 +223,7 @@
             velocity = 0;
             score = 0;
             distanceTraveled = 0;
-            scoreDisplay.textContent = "0%";
+            scoreDisplay.textContent = "0";
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
@@ -276,7 +272,6 @@
                 playerY = gameHeight - 40 - 20;
                 velocity = 0;
                 isJumping = false;
-                canDoubleJump = false;
             }
             
             // Check for collisions with ceiling
@@ -287,8 +282,6 @@
             
             // Move camera (simulate player moving forward)
             distanceTraveled += gameSpeed;
-            const progress = Math.min(100, Math.floor((distanceTraveled / levelLength) * 100));
-            scoreDisplay.textContent = progress + "%";
             
             // Generate new obstacles
             const currentTime = Date.now();
@@ -308,6 +301,13 @@
                 // Move obstacle
                 obstacle.element.style.left = (obstacleX - gameSpeed) + 'px';
                 
+                // Check if player passed the obstacle
+                if (obstacleX + obstacle.width < playerX && !obstacle.passed) {
+                    obstacle.passed = true;
+                    score++;
+                    scoreDisplay.textContent = score;
+                }
+                
                 // Check for collision with player
                 if (
                     playerX + 40 > obstacleX && 
@@ -326,12 +326,6 @@
                 }
             }
             
-            // Check if level completed
-            if (distanceTraveled >= levelLength) {
-                scoreDisplay.textContent = "100%";
-                gameOver(true);
-            }
-            
             // Gradually increase difficulty
             if (distanceTraveled % 1000 === 0) {
                 gameSpeed = Math.min(8, 5 + distanceTraveled / 5000);
@@ -343,15 +337,15 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a new obstacle (shorter and slimmer)
+        // Create a new obstacle (optimized for jump height)
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Slim obstacles (width between 20-30px)
-            const width = 20 + Math.random() * 10;
-            // Shorter obstacles (height between 30-80px)
-            const height = 30 + Math.random() * 50;
+            // Obstacle dimensions (optimized for new jump height)
+            const width = 20 + Math.random() * 20;
+            // Max height is now jumpable (about 200px with new jump force)
+            const height = 30 + Math.random() * 100; 
             const y = gameHeight - height - 20;
             
             obstacle.style.left = gameWidth + 'px';
@@ -365,33 +359,17 @@
                 element: obstacle,
                 width: width,
                 height: height,
-                y: y
+                y: y,
+                passed: false
             });
         }
         
         // Make the player jump
-        function jump(boost = false) {
-            if (!gameIsRunning || gameIsPaused) return;
-            
-            const currentTime = Date.now();
-            const timeSinceLastJump = currentTime - lastJumpTime;
-            
-            // Check for double tap (within 300ms)
-            if (!isJumping && timeSinceLastJump < 300 && canDoubleJump) {
-                // Boosted jump
-                velocity = boostJumpForce;
-                canDoubleJump = false;
-                if (isMusicOn) jumpSound.play();
-            } 
-            // Normal jump if on ground
-            else if (!isJumping) {
-                velocity = normalJumpForce;
-                isJumping = true;
-                canDoubleJump = true;
-                if (isMusicOn) jumpSound.play();
-            }
-            
-            lastJumpTime = currentTime;
+        function jump() {
+            if (!gameIsRunning || gameIsPaused || isJumping) return;
+            velocity = jumpForce;
+            isJumping = true;
+            if (isMusicOn) jumpSound.play();
         }
         
         // Pause the game
@@ -411,25 +389,19 @@
         }
         
         // End the game
-        function gameOver(win = false) {
+        function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
             gameMusic.pause();
             gameMusic.currentTime = 0;
             
             // Update high score
-            const progress = Math.min(100, Math.floor((distanceTraveled / levelLength) * 100));
-            if (progress > highScore) {
-                highScore = progress;
+            if (score > highScore) {
+                highScore = score;
                 localStorage.setItem('gdHighScore', highScore);
             }
             
-            if (win) {
-                finalScoreDisplay.textContent = "100% - You Win!";
-            } else {
-                finalScoreDisplay.textContent = `${progress}% (High: ${highScore}%)`;
-            }
-            
+            finalScoreDisplay.textContent = `${score} (High: ${highScore})`;
             gameOverScreen.style.display = 'block';
         }
         
