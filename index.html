@@ -18,11 +18,10 @@
         
         #game-container {
             position: relative;
-            width: 600px; /* Default 3:2 for PC */
+            width: 600px; /* 3:2 for desktop */
             height: 400px;
             overflow: hidden;
-            background: url('NBG.png');
-            background-size: cover;
+            background: #111;
             border: 3px solid #444;
             border-radius: 5px;
         }
@@ -31,6 +30,8 @@
             position: absolute;
             width: 60px;
             height: 60px;
+            background: #00FF00;
+            border-radius: 50%;
             z-index: 10;
             transform: scaleX(-1);
         }
@@ -112,11 +113,13 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        
+
+        /* Mobile 3:4 aspect ratio */
         @media (max-width: 768px) {
             #game-container {
                 width: 90vw;
-                height: 120vw; /* 3:4 aspect ratio for mobile */
+                height: calc(90vw * 4 / 3); /* 3:4 ratio */
+                max-width: 100%;
                 max-height: 90vh;
             }
         }
@@ -124,7 +127,7 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="player"><img src="UQH.gif" width="60" height="60"></div>
+        <div id="player"></div>
         <div id="ground"></div>
         <div id="score-display">0</div>
         <div id="game-over">
@@ -140,7 +143,7 @@
         </div>
     </div>
 
-    <audio id="game-music" loop autoplay>
+    <audio id="game-music" loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
     </audio>
 
@@ -167,15 +170,11 @@
         const jumpSound = document.getElementById('jump-sound');
         const deathSound = document.getElementById('death-sound');
         
-        let gameHeight = gameContainer.offsetHeight;
-        let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 60 - 20;
-        let playerX = 50;
+        let gameHeight, gameWidth, playerY, playerX;
         let gravity = 0.8;
         let velocity = 0;
         let jumpForce = -16;
         let gameIsRunning = false;
-        let gameIsPaused = false;
         let score = 0;
         let obstacles = [];
         let obstacleFrequency = 1500;
@@ -186,10 +185,17 @@
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
         
+        // Initialize game dimensions
+        function initDimensions() {
+            gameHeight = gameContainer.offsetHeight;
+            gameWidth = gameContainer.offsetWidth;
+            playerY = gameHeight - 60 - 20; // 60 = player height, 20 = ground height
+            playerX = 50;
+        }
+        
         // Initialize game
         function init() {
-            playerY = gameHeight - 60 - 20;
-            playerX = 50;
+            initDimensions();
             velocity = 0;
             score = 0;
             currentGameSpeed = baseGameSpeed;
@@ -197,7 +203,9 @@
             
             // Clear all obstacles
             obstacles.forEach(obstacle => {
-                gameContainer.removeChild(obstacle.element);
+                if (obstacle.element.parentNode) {
+                    gameContainer.removeChild(obstacle.element);
+                }
             });
             obstacles = [];
             
@@ -208,8 +216,8 @@
             // Hide game over screen
             gameOverScreen.style.display = 'none';
             
-            // Auto-play music
-            gameMusic.play().catch(e => console.log("Auto-play prevented:", e));
+            // Try to play music (may require user interaction)
+            gameMusic.play().catch(e => console.log("Audio play prevented:", e));
         }
         
         // Start game
@@ -223,7 +231,7 @@
         
         // Game loop
         function gameLoop() {
-            if (!gameIsRunning || gameIsPaused) return;
+            if (!gameIsRunning) return;
             
             update();
             render();
@@ -325,7 +333,7 @@
         
         // Make the player jump
         function jump() {
-            if (!gameIsRunning || gameIsPaused || isJumping) return;
+            if (!gameIsRunning || isJumping) return;
             velocity = jumpForce;
             isJumping = true;
             jumpSound.play();
@@ -366,28 +374,24 @@
             }
         });
         
-        startBtn.addEventListener('click', startGame);
+        startBtn.addEventListener('click', () => {
+            startGame();
+            // Audio can only be played after user interaction
+            gameMusic.play().catch(e => console.log("Audio play prevented:", e));
+        });
+        
         restartBtn.addEventListener('click', startGame);
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            gameHeight = gameContainer.offsetHeight;
-            gameWidth = gameContainer.offsetWidth;
+            initDimensions();
         });
-        
-        // Touch support for mobile
-        document.addEventListener('touchstart', (e) => {
-            if (gameIsRunning) {
-                jump();
-                e.preventDefault();
-            }
-        }, { passive: false });
 
         // Initialize high score display
         highScoreDisplay.textContent = highScore;
         
-        // Initial game setup
-        init();
+        // Initial setup
+        initDimensions();
     </script>
 </body>
 </html>
