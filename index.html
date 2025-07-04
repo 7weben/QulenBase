@@ -18,8 +18,8 @@
         
         #game-container {
             position: relative;
-            width: 600px; /* 3:2 aspect ratio width */
-            height: 400px; /* 3:2 aspect ratio height */
+            width: 600px; /* Default 3:2 for PC */
+            height: 400px;
             overflow: hidden;
             background: url('NBG.png');
             background-size: cover;
@@ -29,7 +29,7 @@
         
         #player {
             position: absolute;
-            width: 60px; /* 1.5x bigger (40px -> 60px) */
+            width: 60px;
             height: 60px;
             z-index: 10;
             transform: scaleX(-1);
@@ -40,6 +40,7 @@
             background: #FF0000;
             z-index: 5;
             border-radius: 3px;
+            width: 40px; /* Fixed medium width */
         }
         
         #ground {
@@ -112,40 +113,11 @@
             margin-top: 20px;
         }
         
-        #music-toggle {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            z-index: 50;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        #pause-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 45;
-        }
-
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             #game-container {
                 width: 90vw;
-                height: 60vw; /* Maintain 3:2 aspect ratio */
+                height: 120vw; /* 3:4 aspect ratio for mobile */
+                max-height: 90vh;
             }
         }
     </style>
@@ -161,10 +133,6 @@
             <p>High Score: <span id="high-score">0</span></p>
             <button id="restart-btn">Play Again</button>
         </div>
-        <div id="pause-screen">
-            <h2>Game Paused</h2>
-            <button id="resume-btn">Resume</button>
-        </div>
         <div id="start-screen">
             <h1>Geometry Dash Lite</h1>
             <p>Press SPACE, UP ARROW, or CLICK to jump</p>
@@ -172,9 +140,7 @@
         </div>
     </div>
 
-    <button id="music-toggle">🔊</button>
-
-    <audio id="game-music" loop>
+    <audio id="game-music" loop autoplay>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
     </audio>
 
@@ -197,20 +163,17 @@
         const restartBtn = document.getElementById('restart-btn');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
-        const musicToggle = document.getElementById('music-toggle');
-        const pauseScreen = document.getElementById('pause-screen');
-        const resumeBtn = document.getElementById('resume-btn');
         const gameMusic = document.getElementById('game-music');
         const jumpSound = document.getElementById('jump-sound');
         const deathSound = document.getElementById('death-sound');
         
         let gameHeight = gameContainer.offsetHeight;
         let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 60 - 20; // 60 = player height, 20 = ground height
+        let playerY = gameHeight - 60 - 20;
         let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
-        let jumpForce = -16; // Strong jump to accommodate bigger player
+        let jumpForce = -16;
         let gameIsRunning = false;
         let gameIsPaused = false;
         let score = 0;
@@ -220,7 +183,6 @@
         let animationId;
         let baseGameSpeed = 5;
         let currentGameSpeed = 5;
-        let isMusicOn = false;
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
         
@@ -245,17 +207,17 @@
             
             // Hide game over screen
             gameOverScreen.style.display = 'none';
-            pauseScreen.style.display = 'none';
+            
+            // Auto-play music
+            gameMusic.play().catch(e => console.log("Auto-play prevented:", e));
         }
         
         // Start game
         function startGame() {
             init();
             gameIsRunning = true;
-            gameIsPaused = false;
             startScreen.style.display = 'none';
             lastObstacleTime = Date.now();
-            if (isMusicOn) gameMusic.play();
             gameLoop();
         }
         
@@ -293,8 +255,6 @@
             if (currentTime - lastObstacleTime > obstacleFrequency) {
                 createObstacle();
                 lastObstacleTime = currentTime;
-                
-                // Randomize next obstacle time
                 obstacleFrequency = 1000 + Math.random() * 1000;
             }
             
@@ -307,22 +267,21 @@
                 obstacle.element.style.left = (obstacleX - currentGameSpeed) + 'px';
                 
                 // Check if player passed the obstacle
-                if (obstacleX + obstacle.width < playerX && !obstacle.passed) {
+                if (obstacleX + 40 < playerX && !obstacle.passed) {
                     obstacle.passed = true;
                     score++;
                     scoreDisplay.textContent = score;
-                    // Increase speed by 0.025 per score
                     currentGameSpeed = baseGameSpeed + (score * 0.025);
                 }
                 
                 // Check for collision with player
                 if (
                     playerX + 60 > obstacleX && 
-                    playerX < obstacleX + obstacle.width && 
+                    playerX < obstacleX + 40 && 
                     playerY + 60 > obstacle.y && 
                     playerY < obstacle.y + obstacle.height
                 ) {
-                    if (isMusicOn) deathSound.play();
+                    deathSound.play();
                     gameOver();
                 }
                 
@@ -334,24 +293,16 @@
             }
         }
         
-        // Render game
-        function render() {
-            player.style.top = playerY + 'px';
-        }
-        
-        // Create a new obstacle with medium width and jumpable heights
+        // Create obstacle with fixed width and random height
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
-            
-            // Medium width (30-50px)
-            const width = 30 + Math.random() * 20;
             
             // Three height categories (all jumpable)
             const heightTypes = [
                 {name: "Short", min: 30, max: 60},    // 30-60px
                 {name: "Medium", min: 60, max: 100},  // 60-100px
-                {name: "Tall", min: 100, max: 140}    // 100-140px (still jumpable)
+                {name: "Tall", min: 100, max: 140}    // 100-140px
             ];
             
             const selectedType = heightTypes[Math.floor(Math.random() * heightTypes.length)];
@@ -359,7 +310,6 @@
             const y = gameHeight - height - 20;
             
             obstacle.style.left = gameWidth + 'px';
-            obstacle.style.width = width + 'px';
             obstacle.style.height = height + 'px';
             obstacle.style.top = y + 'px';
             
@@ -367,7 +317,6 @@
             
             obstacles.push({
                 element: obstacle,
-                width: width,
                 height: height,
                 y: y,
                 passed: false
@@ -379,31 +328,13 @@
             if (!gameIsRunning || gameIsPaused || isJumping) return;
             velocity = jumpForce;
             isJumping = true;
-            if (isMusicOn) jumpSound.play();
-        }
-        
-        // Pause the game
-        function pauseGame() {
-            if (!gameIsRunning) return;
-            gameIsPaused = true;
-            pauseScreen.style.display = 'flex';
-            gameMusic.pause();
-        }
-        
-        // Resume the game
-        function resumeGame() {
-            gameIsPaused = false;
-            pauseScreen.style.display = 'none';
-            if (isMusicOn) gameMusic.play();
-            gameLoop();
+            jumpSound.play();
         }
         
         // End the game
         function gameOver() {
             gameIsRunning = false;
             cancelAnimationFrame(animationId);
-            gameMusic.pause();
-            gameMusic.currentTime = 0;
             
             // Update high score
             if (score > highScore) {
@@ -416,58 +347,27 @@
             gameOverScreen.style.display = 'block';
         }
         
-        // Toggle music
-        function toggleMusic() {
-            isMusicOn = !isMusicOn;
-            musicToggle.textContent = isMusicOn ? "🔊" : "🔇";
-            
-            if (isMusicOn && gameIsRunning && !gameIsPaused) {
-                gameMusic.play();
-            } else {
-                gameMusic.pause();
-            }
-        }
-        
         // Event listeners
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.key === 'ArrowUp') {
                 if (!gameIsRunning && startScreen.style.display === 'none') {
                     startGame();
-                } else if (gameIsRunning && !gameIsPaused) {
+                } else if (gameIsRunning) {
                     jump();
-                }
-            }
-            
-            if (e.key === 'Escape' && gameIsRunning) {
-                if (gameIsPaused) {
-                    resumeGame();
-                } else {
-                    pauseGame();
                 }
             }
         });
         
         gameContainer.addEventListener('click', () => {
-            if (gameIsRunning && !gameIsPaused) {
+            if (gameIsRunning) {
                 jump();
-            } else if (startScreen.style.display === 'none' && !gameIsPaused) {
+            } else if (startScreen.style.display === 'none') {
                 startGame();
             }
         });
         
-        startBtn.addEventListener('click', () => {
-            startGame();
-        });
-        
-        restartBtn.addEventListener('click', () => {
-            startGame();
-        });
-        
-        resumeBtn.addEventListener('click', () => {
-            resumeGame();
-        });
-        
-        musicToggle.addEventListener('click', toggleMusic);
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
         
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -477,7 +377,7 @@
         
         // Touch support for mobile
         document.addEventListener('touchstart', (e) => {
-            if (gameIsRunning && !gameIsPaused) {
+            if (gameIsRunning) {
                 jump();
                 e.preventDefault();
             }
@@ -485,6 +385,9 @@
 
         // Initialize high score display
         highScoreDisplay.textContent = highScore;
+        
+        // Initial game setup
+        init();
     </script>
 </body>
 </html>
