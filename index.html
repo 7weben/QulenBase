@@ -18,13 +18,15 @@
         
         #game-container {
             position: relative;
-            width: 600px; /* Default 3:2 aspect ratio width */
-            height: 400px; /* Default 3:2 aspect ratio height */
+            width: 90vw;
+            height: 120vw; /* 3:4 aspect ratio for portrait (mobile) */
             overflow: hidden;
             background: url('NBG.png');
             background-size: cover;
             border: 3px solid #444;
             border-radius: 5px;
+            max-width: 600px;
+            max-height: 400px;
         }
         
         #player {
@@ -142,36 +144,36 @@
             z-index: 45;
         }
 
-        /* Mobile portrait - 3:4 aspect ratio */
-        @media (max-width: 768px) and (orientation: portrait) {
+        /* Landscape orientation (PC or mobile landscape) */
+        @media (orientation: landscape) {
             #game-container {
                 width: 90vw;
-                height: calc(90vw * 4/3); /* 3:4 aspect ratio */
-                max-height: 90vh;
-                max-width: calc(90vh * 3/4); /* Prevent too wide */
+                height: 60vw; /* 3:2 aspect ratio */
+                max-width: 800px;
+                max-height: 533px;
             }
         }
 
-        /* Mobile landscape - 3:2 aspect ratio */
-        @media (max-width: 768px) and (orientation: landscape) {
-            #game-container {
-                width: 90vw;
-                height: calc(90vw * 2/3); /* 3:2 aspect ratio */
-                max-height: 90vh;
-                max-width: calc(90vh * 3/2); /* Prevent too tall */
+        /* Adjust font sizes for smaller screens */
+        @media (max-height: 600px) {
+            #score-display {
+                font-size: 18px;
             }
-        }
-
-        /* PC and tablets - 3:2 aspect ratio */
-        @media (min-width: 769px) {
-            #game-container {
-                width: 600px;
-                height: 400px; /* 3:2 aspect ratio */
+            #start-btn, #restart-btn, #resume-btn {
+                padding: 10px 20px;
+                font-size: 18px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Rest of your HTML remains the same -->
     <div id="game-container">
         <div id="player"><img src="UQH.gif" width="60" height="60"></div>
         <div id="ground"></div>
@@ -195,6 +197,7 @@
 
     <button id="music-toggle">🔊</button>
 
+    <!-- Rest of your audio elements remain the same -->
     <audio id="game-music" loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
     </audio>
@@ -247,7 +250,7 @@
         
         // Initialize game
         function init() {
-            // Update game dimensions based on current container size
+            // Update game dimensions
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
             
@@ -273,6 +276,7 @@
             pauseScreen.style.display = 'none';
         }
         
+        // Rest of your JavaScript remains the same...
         // Start game
         function startGame() {
             init();
@@ -498,7 +502,7 @@
         window.addEventListener('resize', () => {
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
-            // Reset player position in case aspect ratio changed
+            // Reinitialize player position if game is running
             if (gameIsRunning) {
                 playerY = gameHeight - 60 - 20;
                 player.style.top = playerY + 'px';
