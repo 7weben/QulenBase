@@ -18,8 +18,8 @@
         
         #game-container {
             position: relative;
-            width: 600px; /* 3:4 aspect ratio */
-            height: 800px;
+            width: 600px; /* 3:2 aspect ratio width */
+            height: 400px; /* 3:2 aspect ratio height */
             overflow: hidden;
             background: url('NBG.png');
             background-size: cover;
@@ -29,8 +29,8 @@
         
         #player {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 60px; /* 1.5x bigger (40px -> 60px) */
+            height: 60px;
             z-index: 10;
             transform: scaleX(-1);
         }
@@ -141,16 +141,24 @@
             color: white;
             z-index: 45;
         }
+
+        @media (max-width: 600px) {
+            #game-container {
+                width: 90vw;
+                height: 60vw; /* Maintain 3:2 aspect ratio */
+            }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="player"><img src="UQH.gif" width="40" height="40"></div>
+        <div id="player"><img src="UQH.gif" width="60" height="60"></div>
         <div id="ground"></div>
         <div id="score-display">0</div>
         <div id="game-over">
             <h2>Game Over!</h2>
             <p>Score: <span id="final-score">0</span></p>
+            <p>High Score: <span id="high-score">0</span></p>
             <button id="restart-btn">Play Again</button>
         </div>
         <div id="pause-screen">
@@ -185,6 +193,7 @@
         const scoreDisplay = document.getElementById('score-display');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
+        const highScoreDisplay = document.getElementById('high-score');
         const restartBtn = document.getElementById('restart-btn');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
@@ -197,11 +206,11 @@
         
         let gameHeight = gameContainer.offsetHeight;
         let gameWidth = gameContainer.offsetWidth;
-        let playerY = gameHeight - 40 - 20;
+        let playerY = gameHeight - 60 - 20; // 60 = player height, 20 = ground height
         let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
-        let jumpForce = -16; // Increased jump height (2x original)
+        let jumpForce = -16; // Strong jump to accommodate bigger player
         let gameIsRunning = false;
         let gameIsPaused = false;
         let score = 0;
@@ -209,20 +218,19 @@
         let obstacleFrequency = 1500;
         let lastObstacleTime = 0;
         let animationId;
-        let gameSpeed = 5;
-        let levelLength = 10000;
-        let distanceTraveled = 0;
+        let baseGameSpeed = 5;
+        let currentGameSpeed = 5;
         let isMusicOn = false;
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
         
         // Initialize game
         function init() {
-            playerY = gameHeight - 40 - 20;
+            playerY = gameHeight - 60 - 20;
             playerX = 50;
             velocity = 0;
             score = 0;
-            distanceTraveled = 0;
+            currentGameSpeed = baseGameSpeed;
             scoreDisplay.textContent = "0";
             
             // Clear all obstacles
@@ -268,8 +276,8 @@
             playerY += velocity;
             
             // Check for collisions with ground
-            if (playerY > gameHeight - 40 - 20) {
-                playerY = gameHeight - 40 - 20;
+            if (playerY > gameHeight - 60 - 20) {
+                playerY = gameHeight - 60 - 20;
                 velocity = 0;
                 isJumping = false;
             }
@@ -279,9 +287,6 @@
                 playerY = 0;
                 velocity = 0;
             }
-            
-            // Move camera (simulate player moving forward)
-            distanceTraveled += gameSpeed;
             
             // Generate new obstacles
             const currentTime = Date.now();
@@ -299,20 +304,22 @@
                 const obstacleX = parseFloat(obstacle.element.style.left);
                 
                 // Move obstacle
-                obstacle.element.style.left = (obstacleX - gameSpeed) + 'px';
+                obstacle.element.style.left = (obstacleX - currentGameSpeed) + 'px';
                 
                 // Check if player passed the obstacle
                 if (obstacleX + obstacle.width < playerX && !obstacle.passed) {
                     obstacle.passed = true;
                     score++;
                     scoreDisplay.textContent = score;
+                    // Increase speed by 0.025 per score
+                    currentGameSpeed = baseGameSpeed + (score * 0.025);
                 }
                 
                 // Check for collision with player
                 if (
-                    playerX + 40 > obstacleX && 
+                    playerX + 60 > obstacleX && 
                     playerX < obstacleX + obstacle.width && 
-                    playerY + 40 > obstacle.y && 
+                    playerY + 60 > obstacle.y && 
                     playerY < obstacle.y + obstacle.height
                 ) {
                     if (isMusicOn) deathSound.play();
@@ -325,11 +332,6 @@
                     obstacles.splice(i, 1);
                 }
             }
-            
-            // Gradually increase difficulty
-            if (distanceTraveled % 1000 === 0) {
-                gameSpeed = Math.min(8, 5 + distanceTraveled / 5000);
-            }
         }
         
         // Render game
@@ -337,15 +339,23 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a new obstacle (optimized for jump height)
+        // Create a new obstacle with medium width and jumpable heights
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Obstacle dimensions (optimized for new jump height)
-            const width = 20 + Math.random() * 20;
-            // Max height is now jumpable (about 200px with new jump force)
-            const height = 30 + Math.random() * 100; 
+            // Medium width (30-50px)
+            const width = 30 + Math.random() * 20;
+            
+            // Three height categories (all jumpable)
+            const heightTypes = [
+                {name: "Short", min: 30, max: 60},    // 30-60px
+                {name: "Medium", min: 60, max: 100},  // 60-100px
+                {name: "Tall", min: 100, max: 140}    // 100-140px (still jumpable)
+            ];
+            
+            const selectedType = heightTypes[Math.floor(Math.random() * heightTypes.length)];
+            const height = selectedType.min + Math.random() * (selectedType.max - selectedType.min);
             const y = gameHeight - height - 20;
             
             obstacle.style.left = gameWidth + 'px';
@@ -401,7 +411,8 @@
                 localStorage.setItem('gdHighScore', highScore);
             }
             
-            finalScoreDisplay.textContent = `${score} (High: ${highScore})`;
+            finalScoreDisplay.textContent = score;
+            highScoreDisplay.textContent = highScore;
             gameOverScreen.style.display = 'block';
         }
         
@@ -471,6 +482,9 @@
                 e.preventDefault();
             }
         }, { passive: false });
+
+        // Initialize high score display
+        highScoreDisplay.textContent = highScore;
     </script>
 </body>
 </html>
