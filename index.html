@@ -191,76 +191,63 @@
             margin-top: 0;
         }
         
-        /* Memory Game Styles */
-        #memory-game {
-            display: none;
-        }
-        
-        .memory-board {
+        /* Tic Tac Toe Styles */
+        .board {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
             margin: 15px auto;
+            width: 150px;
         }
         
-        .memory-card {
-            width: 60px;
-            height: 60px;
-            background: #444;
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #333;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 24px;
             cursor: pointer;
-            border-radius: 5px;
-            color: transparent;
-            transition: all 0.3s ease;
         }
         
-        .memory-card.flipped {
-            background: #666;
-            color: white;
-            transform: rotateY(180deg);
-        }
-        
-        .memory-card.matched {
-            background: #2ecc71;
-            cursor: default;
-        }
-        
-        /* Math Game Styles */
-        #math-game {
+        /* Word Guess Styles */
+        #word-guess {
             display: none;
         }
         
-        #math-problem {
-            font-size: 24px;
-            color: white;
-            margin: 15px 0;
-            text-align: center;
+        #word-clue {
+            color: #FFD700;
+            font-size: 18px;
+            margin: 10px 0;
         }
         
-        #math-answer {
+        #word-display {
+            font-size: 24px;
+            letter-spacing: 5px;
+            margin: 15px 0;
+            color: white;
+        }
+        
+        #word-input {
             padding: 8px;
             font-size: 16px;
             width: 100%;
             margin-bottom: 10px;
         }
         
-        #submit-math {
+        #submit-guess {
             background: #00FF00;
             border: none;
             padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            width: 100%;
         }
         
         #challenge-result {
             color: white;
             margin: 10px 0;
             min-height: 20px;
-            text-align: center;
         }
         
         #timer {
@@ -268,10 +255,18 @@
             font-size: 18px;
             font-weight: bold;
             margin: 10px 0;
-            text-align: center;
         }
         
-        /* Score Popup Styles */
+        #ad-space {
+            background: #333;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        /* New Styles for Effects */
         .score-popup {
             position: absolute;
             font-size: 24px;
@@ -328,12 +323,6 @@
             80% { transform: translate(2px, -2px); }
             100% { transform: translate(0); }
         }
-        
-        #math-progress {
-            color: white;
-            text-align: center;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
@@ -358,21 +347,35 @@
             <button id="close-challenge">✕</button>
             <h2>Continue Challenge!</h2>
             
-            <!-- Memory Game -->
-            <div id="memory-game">
-                <p id="challenge-result">Match all pairs in 15 seconds to continue!</p>
-                <div id="timer">Time left: 15</div>
-                <div class="memory-board" id="memory-board"></div>
+            <!-- Tic Tac Toe Game -->
+            <div id="tic-tac-toe">
+                <p id="challenge-result">Win in 10 seconds to continue!</p>
+                <div id="timer">Time left: 10</div>
+                <div class="board" id="board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
             </div>
             
-            <!-- Math Game -->
-            <div id="math-game">
-                <p id="challenge-result">Solve 3 math problems in 15 seconds to continue!</p>
-                <div id="timer">Time left: 15</div>
-                <div id="math-problem"></div>
-                <input type="number" id="math-answer" placeholder="Your answer">
-                <button id="submit-math">Submit</button>
-                <div id="math-progress">Problems solved: 0/3</div>
+            <!-- Word Guess Game -->
+            <div id="word-guess">
+                <p id="challenge-result-word">Guess the word in 10 seconds!</p>
+                <div id="word-timer">Time left: 10</div>
+                <p id="word-clue">Clue: </p>
+                <p id="word-display">_ _ _ _ _</p>
+                <input type="text" id="word-input" placeholder="Your guess">
+                <button id="submit-guess">Submit</button>
+            </div>
+            
+            <div id="ad-space">
+                Advertisement Space
             </div>
         </div>
     </div>
@@ -398,8 +401,8 @@
         const challengeContainer = document.getElementById('challenge-container');
         const challengePopup = document.getElementById('challenge-popup');
         const closeChallenge = document.getElementById('close-challenge');
-        const memoryGame = document.getElementById('memory-game');
-        const mathGame = document.getElementById('math-game');
+        const ticTacToeGame = document.getElementById('tic-tac-toe');
+        const wordGuessGame = document.getElementById('word-guess');
         
         // Game variables
         let gameHeight, gameWidth;
@@ -414,10 +417,10 @@
         let currentSpeedMultiplier = 1;
         let isShowingChallenge = false;
         let currentChallenge = null;
+        let lastObstaclePosition = 'bottom';
+        let patternBroken = false;
         let backgroundChanged = false;
-        let lastGroupScored = null;
-        let groupCounter = 0;
-        let lastObstaclePosition = 'bottom'; // Track last obstacle position
+        let lastGroupScored = null; // Track last scored obstacle group
         
         // Initialize game dimensions
         function initGameSize() {
@@ -456,10 +459,10 @@
             currentSpeedMultiplier = 1;
             scoreDisplay.textContent = "0";
             currentChallenge = null;
+            lastObstaclePosition = 'bottom';
+            patternBroken = false;
             backgroundChanged = false;
             lastGroupScored = null;
-            groupCounter = 0;
-            lastObstaclePosition = 'bottom';
             gameBg.style.backgroundImage = "url('NBG.png')";
             gameBg.style.opacity = 1;
             
@@ -509,9 +512,13 @@
         function update() {
             const currentTime = Date.now();
             
-            // Generate new obstacles (alternating between top and bottom)
-            if (currentTime - lastObstacleTime > 1500) {
-                createObstacleGroup();
+            // Generate new obstacles
+            if (currentTime - lastObstacleTime > 1000) { // Reduced frequency since we're making groups
+                if (Math.random() > 0.3) {
+                    createObstacleGroup();
+                } else {
+                    createFloatingObstacle();
+                }
                 lastObstacleTime = currentTime;
             }
             
@@ -585,28 +592,41 @@
             player.style.top = playerY + 'px';
         }
         
-        // Create a group of obstacles (3-5 spikes) - alternating between top and bottom
+        // Create a group of obstacles (3-5 spikes) attached to floors
         function createObstacleGroup() {
             const groupSize = Math.floor(Math.random() * 3) + 3; // 3-5 spikes
-            const groupId = groupCounter++;
+            const groupId = Date.now(); // Unique ID for this group
+            let isTopObstacle;
             
-            // Alternate between top and bottom
-            const position = lastObstaclePosition === 'bottom' ? 'top' : 'bottom';
-            lastObstaclePosition = position;
-
+            if (obstacles.length > 0 && Math.random() < 0.1 && !patternBroken) {
+                isTopObstacle = lastObstaclePosition === 'top';
+                patternBroken = true;
+            } else {
+                isTopObstacle = lastObstaclePosition === 'bottom';
+                patternBroken = false;
+            }
+            
+            const isHorizontal = isTopObstacle ? Math.random() > 0.5 : true;
+            
             // Create multiple obstacles in a group
             for (let i = 0; i < groupSize; i++) {
                 const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle spike horizontal';
+                obstacle.className = 'obstacle spike ' + (isHorizontal ? 'horizontal' : 'vertical');
                 
                 let width = 30, height = 30;
                 let y;
                 let x = gameWidth + (i * 50); // Space them out by 50px
                 
-                if (position === 'top') {
-                    y = 20;
+                if (isTopObstacle) {
+                    if (isHorizontal) {
+                        y = 20;
+                    } else {
+                        y = 20;
+                    }
+                    lastObstaclePosition = 'top';
                 } else {
                     y = gameHeight - height - 20;
+                    lastObstaclePosition = 'bottom';
                 }
                 
                 obstacle.style.left = x + 'px';
@@ -621,10 +641,37 @@
                     width: width,
                     height: height,
                     y: y,
-                    groupId: groupId,
-                    position: position
+                    groupId: groupId, // Mark all obstacles in this group with the same ID
+                    isFloorAttached: true
                 });
             }
+        }
+        
+        // Create single floating obstacles
+        function createFloatingObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle spike vertical';
+            
+            const width = 30, height = 30;
+            const x = gameWidth;
+            // Random y position between floors (with padding)
+            const y = 40 + Math.random() * (gameHeight - 80 - height);
+            
+            obstacle.style.left = x + 'px';
+            obstacle.style.width = width + 'px';
+            obstacle.style.height = height + 'px';
+            obstacle.style.top = y + 'px';
+            
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                width: width,
+                height: height,
+                y: y,
+                groupId: null, // No group for floating obstacles
+                isFloorAttached: false
+            });
         }
         
         // Switch between top and bottom floor
@@ -642,7 +689,7 @@
         function increaseScore() {
             score++;
             scoreDisplay.textContent = score;
-            // Increased speed multiplier (0.05x per score)
+            // Set speed multiplier to increase by 0.05x per score
             currentSpeedMultiplier = 1 + (score * 0.05);
         }
         
@@ -672,80 +719,53 @@
             challengeContainer.style.display = 'flex';
             
             if (Math.random() > 0.5) {
-                currentChallenge = 'memory';
-                memoryGame.style.display = 'block';
-                mathGame.style.display = 'none';
-                startMemoryGame();
+                currentChallenge = 'tic-tac-toe';
+                ticTacToeGame.style.display = 'block';
+                wordGuessGame.style.display = 'none';
+                startTicTacToe();
             } else {
-                currentChallenge = 'math';
-                memoryGame.style.display = 'none';
-                mathGame.style.display = 'block';
-                startMathGame();
+                currentChallenge = 'word-guess';
+                ticTacToeGame.style.display = 'none';
+                wordGuessGame.style.display = 'block';
+                startWordGuess();
             }
         }
         
-        /* ===== MEMORY GAME ===== */
-        let memoryCards = [];
-        let flippedCards = [];
-        let matchedPairs = 0;
-        let memoryTimer = 15;
-        let memoryTimerInterval;
-        const memorySymbols = ['🍎', '🍌', '🍒', '🍓', '🍊', '🍋', '🍐', '🍉'];
+        /* ===== TIC TAC TOE GAME ===== */
+        let currentPlayer = 'X';
+        let gameBoard = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let timer = 10;
+        let timerInterval;
         
-        function startMemoryGame() {
-            resetMemoryGame();
-            startMemoryTimer();
+        function startTicTacToe() {
+            resetTicTacToe();
+            startTimer();
         }
         
-        function resetMemoryGame() {
-            const memoryBoard = document.getElementById('memory-board');
-            memoryBoard.innerHTML = '';
-            memoryCards = [];
-            flippedCards = [];
-            matchedPairs = 0;
-            memoryTimer = 15;
-            document.getElementById('timer').textContent = "Time left: 15";
-            document.getElementById('challenge-result').textContent = "Match all pairs in 15 seconds to continue!";
+        function resetTicTacToe() {
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            timer = 10;
+            document.getElementById('timer').textContent = "Time left: 10";
+            document.getElementById('challenge-result').textContent = "Win in 10 seconds to continue!";
             
-            // Create pairs of symbols
-            const symbols = [...memorySymbols, ...memorySymbols];
-            
-            // Shuffle symbols
-            for (let i = symbols.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [symbols[i], symbols[j]] = [symbols[j], symbols[i]];
-            }
-            
-            // Create cards
-            for (let i = 0; i < symbols.length; i++) {
-                const card = document.createElement('div');
-                card.className = 'memory-card';
-                card.dataset.index = i;
-                card.dataset.symbol = symbols[i];
-                card.textContent = symbols[i];
-                card.addEventListener('click', flipCard);
-                memoryBoard.appendChild(card);
-                memoryCards.push(card);
-            }
-            
-            // Initially hide all cards
-            setTimeout(() => {
-                memoryCards.forEach(card => {
-                    card.textContent = '';
-                    card.style.backgroundColor = '#444';
-                });
-            }, 1000);
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+            });
         }
         
-        function startMemoryTimer() {
-            clearInterval(memoryTimerInterval);
-            memoryTimerInterval = setInterval(() => {
-                memoryTimer--;
-                document.getElementById('timer').textContent = `Time left: ${memoryTimer}`;
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = `Time left: ${timer}`;
                 
-                if (memoryTimer <= 0) {
-                    clearInterval(memoryTimerInterval);
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
                     document.getElementById('challenge-result').textContent = "Time's up! Game over.";
+                    gameActive = false;
                     
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
@@ -756,117 +776,192 @@
             }, 1000);
         }
         
-        function flipCard() {
-            // Don't allow flipping if already flipped or matched
-            if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
+        function handleCellClick(e) {
+            if (!gameActive || currentPlayer !== 'X') return;
             
-            // Don't allow more than 2 cards flipped at once
-            if (flippedCards.length >= 2) return;
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
             
-            // Flip the card
-            this.classList.add('flipped');
-            this.textContent = this.dataset.symbol;
-            flippedCards.push(this);
+            if (gameBoard[index] !== '') return;
             
-            // Check for match if two cards are flipped
-            if (flippedCards.length === 2) {
-                checkForMatch();
-            }
-        }
-        
-        function checkForMatch() {
-            const [card1, card2] = flippedCards;
+            gameBoard[index] = currentPlayer;
+            cell.textContent = currentPlayer;
             
-            if (card1.dataset.symbol === card2.dataset.symbol) {
-                // Match found
-                card1.classList.add('matched');
-                card2.classList.add('matched');
-                flippedCards = [];
-                matchedPairs++;
+            if (checkWinner('X')) {
+                clearInterval(timerInterval);
+                document.getElementById('challenge-result').textContent = `You won! Continuing your run...`;
+                gameActive = false;
                 
-                // Check if all pairs are matched
-                if (matchedPairs === memorySymbols.length) {
-                    clearInterval(memoryTimerInterval);
-                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        continueAfterChallenge();
-                    }, 1500);
-                }
-            } else {
-                // No match - flip back after delay
                 setTimeout(() => {
-                    card1.classList.remove('flipped');
-                    card2.classList.remove('flipped');
-                    card1.textContent = '';
-                    card2.textContent = '';
-                    flippedCards = [];
+                    challengeContainer.style.display = 'none';
+                    continueAfterChallenge();
+                }, 1500);
+                return;
+            }
+            
+            if (isBoardFull()) {
+                clearInterval(timerInterval);
+                document.getElementById('challenge-result').textContent = "Tie game! Restarting challenge...";
+                setTimeout(() => {
+                    resetTicTacToe();
+                    startTimer();
                 }, 1000);
+                return;
             }
-        }
-        
-        /* ===== MATH GAME ===== */
-        let mathProblems = [];
-        let currentProblem = 0;
-        let problemsSolved = 0;
-        let mathTimer = 15;
-        let mathTimerInterval;
-        
-        function startMathGame() {
-            resetMathGame();
-            startMathTimer();
-            if (window.innerWidth > 768) {
-                document.getElementById('math-answer').focus();
-            }
-        }
-        
-        function resetMathGame() {
-            mathProblems = [];
-            currentProblem = 0;
-            problemsSolved = 0;
-            mathTimer = 15;
-            document.getElementById('timer').textContent = "Time left: 15";
-            document.getElementById('challenge-result').textContent = "Solve 3 math problems in 15 seconds to continue!";
-            document.getElementById('math-progress').textContent = "Problems solved: 0/3";
             
-            // Generate 3 random math problems
-            for (let i = 0; i < 3; i++) {
-                const a = Math.floor(Math.random() * 10) + 1;
-                const b = Math.floor(Math.random() * 10) + 1;
-                const operators = ['+', '-', '*'];
-                const op = operators[Math.floor(Math.random() * operators.length)];
-                
-                let answer;
-                switch (op) {
-                    case '+': answer = a + b; break;
-                    case '-': answer = a - b; break;
-                    case '*': answer = a * b; break;
+            currentPlayer = 'O';
+            document.getElementById('challenge-result').textContent = "Computer's turn...";
+            
+            setTimeout(() => {
+                if (gameActive) {
+                    makeAIMove();
+                    
+                    if (checkWinner('O')) {
+                        clearInterval(timerInterval);
+                        document.getElementById('challenge-result').textContent = `Computer won! Game over.`;
+                        gameActive = false;
+                        
+                        setTimeout(() => {
+                            challengeContainer.style.display = 'none';
+                            gameOverScreen.style.display = 'block';
+                            isShowingChallenge = false;
+                        }, 1500);
+                        return;
+                    }
+                    
+                    if (isBoardFull()) {
+                        clearInterval(timerInterval);
+                        document.getElementById('challenge-result').textContent = "Tie game! Restarting challenge...";
+                        setTimeout(() => {
+                            resetTicTacToe();
+                            startTimer();
+                        }, 1000);
+                        return;
+                    }
+                    
+                    currentPlayer = 'X';
+                    document.getElementById('challenge-result').textContent = "Your turn (X)";
                 }
-                
-                mathProblems.push({
-                    problem: `${a} ${op} ${b}`,
-                    answer: answer
-                });
+            }, 500);
+        }
+        
+        function makeAIMove() {
+            const availableSpots = gameBoard.map((spot, index) => spot === '' ? index : null).filter(val => val !== null);
+            
+            // Check for winning move
+            for (let i = 0; i < availableSpots.length; i++) {
+                const index = availableSpots[i];
+                gameBoard[index] = 'O';
+                if (checkWinner('O')) {
+                    document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    return;
+                }
+                gameBoard[index] = '';
             }
             
-            displayCurrentProblem();
+            // Block player's winning move
+            for (let i = 0; i < availableSpots.length; i++) {
+                const index = availableSpots[i];
+                gameBoard[index] = 'X';
+                if (checkWinner('X')) {
+                    gameBoard[index] = 'O';
+                    document.querySelector(`.cell[data-index="${index}"]`).textContent = 'O';
+                    return;
+                }
+                gameBoard[index] = '';
+            }
+            
+            // Take center if available
+            if (gameBoard[4] === '') {
+                gameBoard[4] = 'O';
+                document.querySelector('.cell[data-index="4"]').textContent = 'O';
+                return;
+            }
+            
+            // Take a corner if available
+            const corners = [0, 2, 6, 8];
+            const availableCorners = corners.filter(index => gameBoard[index] === '');
+            if (availableCorners.length > 0) {
+                const randomCorner = availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                gameBoard[randomCorner] = 'O';
+                document.querySelector(`.cell[data-index="${randomCorner}"]`).textContent = 'O';
+                return;
+            }
+            
+            // Take any available spot
+            const randomSpot = availableSpots[Math.floor(Math.random() * availableSpots.length)];
+            gameBoard[randomSpot] = 'O';
+            document.querySelector(`.cell[data-index="${randomSpot}"]`).textContent = 'O';
         }
         
-        function displayCurrentProblem() {
-            document.getElementById('math-problem').textContent = mathProblems[currentProblem].problem;
-            document.getElementById('math-answer').value = '';
+        function checkWinner(player) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (gameBoard[a] === player && gameBoard[b] === player && gameBoard[c] === player) {
+                    return true;
+                }
+            }
+            return false;
         }
         
-        function startMathTimer() {
-            clearInterval(mathTimerInterval);
-            mathTimerInterval = setInterval(() => {
-                mathTimer--;
-                document.getElementById('timer').textContent = `Time left: ${mathTimer}`;
+        function isBoardFull() {
+            return gameBoard.every(cell => cell !== '');
+        }
+        
+        /* ===== WORD GUESS GAME ===== */
+        const wordList = [
+            { word: "apple", clue: "A common fruit that grows on trees" },
+            { word: "banana", clue: "Yellow curved tropical fruit" },
+            { word: "orange", clue: "Citrus fruit that's also a color" },
+            { word: "guitar", clue: "Musical instrument with strings" },
+            { word: "planet", clue: "Celestial body that orbits a star" },
+            { word: "dragon", clue: "Mythical fire-breathing creature" },
+            { word: "puzzle", clue: "Game that tests your problem-solving skills" },
+            { word: "rocket", clue: "Vehicle that travels to space" },
+            { word: "jungle", clue: "Dense tropical forest" },
+            { word: "whisper", clue: "To speak very quietly" }
+        ];
+        
+        let currentWord = '';
+        let hiddenWord = [];
+        let wordTimer = 10;
+        let wordTimerInterval;
+        
+        function startWordGuess() {
+            resetWordGuess();
+            startWordTimer();
+            if (window.innerWidth > 768) {
+                document.getElementById('word-input').focus();
+            }
+        }
+        
+        function resetWordGuess() {
+            const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+            currentWord = randomWord.word.toLowerCase();
+            hiddenWord = Array(currentWord.length).fill('_');
+            wordTimer = 10;
+            document.getElementById('word-timer').textContent = "Time left: 10";
+            document.getElementById('challenge-result-word').textContent = "Guess the word in 10 seconds!";
+            document.getElementById('word-clue').textContent = `Clue: ${randomWord.clue}`;
+            document.getElementById('word-display').textContent = hiddenWord.join(' ');
+            document.getElementById('word-input').value = '';
+        }
+        
+        function startWordTimer() {
+            clearInterval(wordTimerInterval);
+            wordTimerInterval = setInterval(() => {
+                wordTimer--;
+                document.getElementById('word-timer').textContent = `Time left: ${wordTimer}`;
                 
-                if (mathTimer <= 0) {
-                    clearInterval(mathTimerInterval);
-                    document.getElementById('challenge-result').textContent = "Time's up! Game over.";
+                if (wordTimer <= 0) {
+                    clearInterval(wordTimerInterval);
+                    document.getElementById('challenge-result-word').textContent = "Time's up! Game over.";
                     
                     setTimeout(() => {
                         challengeContainer.style.display = 'none';
@@ -877,29 +972,20 @@
             }, 1000);
         }
         
-        function checkMathAnswer() {
-            const userAnswer = parseInt(document.getElementById('math-answer').value);
-            const correctAnswer = mathProblems[currentProblem].answer;
+        function checkWordGuess() {
+            const guess = document.getElementById('word-input').value.toLowerCase();
             
-            if (userAnswer === correctAnswer) {
-                problemsSolved++;
-                document.getElementById('math-progress').textContent = `Problems solved: ${problemsSolved}/3`;
+            if (guess === currentWord) {
+                clearInterval(wordTimerInterval);
+                document.getElementById('challenge-result-word').textContent = "Correct! Continuing your run...";
                 
-                if (problemsSolved >= 3) {
-                    clearInterval(mathTimerInterval);
-                    document.getElementById('challenge-result').textContent = "You won! Continuing your run...";
-                    
-                    setTimeout(() => {
-                        challengeContainer.style.display = 'none';
-                        continueAfterChallenge();
-                    }, 1500);
-                } else {
-                    currentProblem++;
-                    displayCurrentProblem();
-                }
+                setTimeout(() => {
+                    challengeContainer.style.display = 'none';
+                    continueAfterChallenge();
+                }, 1500);
             } else {
-                document.getElementById('challenge-result').textContent = "Wrong answer! Try again.";
-                document.getElementById('math-answer').value = '';
+                document.getElementById('challenge-result-word').textContent = "Wrong guess! Try again.";
+                document.getElementById('word-input').value = '';
             }
         }
         
@@ -933,18 +1019,21 @@
         
         restartBtn.addEventListener('click', startGame);
         closeChallenge.addEventListener('click', () => {
-            clearInterval(memoryTimerInterval);
-            clearInterval(mathTimerInterval);
+            clearInterval(timerInterval);
+            clearInterval(wordTimerInterval);
             challengeContainer.style.display = 'none';
             gameOverScreen.style.display = 'block';
             isShowingChallenge = false;
         });
         
-        // Math game event listeners
-        document.getElementById('submit-math').addEventListener('click', checkMathAnswer);
-        document.getElementById('math-answer').addEventListener('keypress', (e) => {
+        // Tic Tac Toe event listeners
+        document.getElementById('board').addEventListener('click', handleCellClick);
+        
+        // Word Guess event listeners
+        document.getElementById('submit-guess').addEventListener('click', checkWordGuess);
+        document.getElementById('word-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                checkMathAnswer();
+                checkWordGuess();
             }
         });
         
