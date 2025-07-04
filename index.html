@@ -2,12 +2,7 @@
 <html>
 <head>
     <title>Geometry Dash Lite</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
         body {
             margin: 0;
             padding: 0;
@@ -16,61 +11,54 @@
             align-items: center;
             height: 100vh;
             background: #222;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
         }
         
         #game-container {
             position: relative;
-            width: 90vw;
-            height: 120vw; /* 3:4 aspect ratio for mobile */
+            width: 600px; /* Default 3:2 aspect ratio width */
+            height: 400px; /* Default 3:2 aspect ratio height */
             overflow: hidden;
-            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+            background: url('NBG.png');
+            background-size: cover;
             border: 3px solid #444;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 5px;
         }
         
         #player {
             position: absolute;
-            width: 12%;
-            height: 12%;
+            width: 60px;
+            height: 60px;
             z-index: 10;
             transform: scaleX(-1);
-            transition: transform 0.1s;
-            image-rendering: pixelated;
         }
         
         .obstacle {
             position: absolute;
-            background: #FF5555;
+            background: #FF0000;
             z-index: 5;
-            border-radius: 5px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-            border-top: 2px solid #FF9999;
+            border-radius: 3px;
         }
         
         #ground {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 5%;
-            background: linear-gradient(to right, #555, #777, #555);
+            height: 20px;
+            background: #555;
             z-index: 3;
-            box-shadow: 0 -5px 10px rgba(0,0,0,0.3);
         }
         
         #score-display {
             position: absolute;
-            top: 2%;
-            right: 5%;
-            font-size: 5vw;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
             color: white;
             z-index: 20;
             text-shadow: 0 0 5px black;
-            font-weight: bold;
         }
         
         #game-over {
@@ -78,34 +66,24 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 5%;
+            padding: 20px;
             border-radius: 10px;
             text-align: center;
             display: none;
             z-index: 30;
-            width: 80%;
-            border: 2px solid #FF5555;
-            box-shadow: 0 0 20px rgba(255,0,0,0.3);
+            width: 300px;
         }
         
         #restart-btn {
-            background: linear-gradient(to bottom, #00CC00, #009900);
+            background-color: #00FF00;
             border: none;
-            padding: 3% 6%;
-            font-size: 4vw;
+            padding: 10px 20px;
+            font-size: 18px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 5%;
-            color: white;
-            text-shadow: 0 0 3px black;
-            box-shadow: 0 3px 0 #006600;
-        }
-        
-        #restart-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #006600;
+            margin-top: 15px;
         }
         
         #start-screen {
@@ -114,7 +92,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -122,44 +100,31 @@
             color: white;
             z-index: 40;
             text-align: center;
-            padding: 5%;
         }
         
         #start-btn {
-            background: linear-gradient(to bottom, #00CC00, #009900);
+            background-color: #00FF00;
             border: none;
-            padding: 4% 8%;
-            font-size: 5vw;
+            padding: 15px 30px;
+            font-size: 24px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 8%;
-            color: white;
-            text-shadow: 0 0 3px black;
-            box-shadow: 0 4px 0 #006600;
-        }
-        
-        #start-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #006600;
+            margin-top: 20px;
         }
         
         #music-toggle {
             position: absolute;
-            bottom: 2%;
-            left: 2%;
+            bottom: 10px;
+            left: 10px;
             z-index: 50;
             background: rgba(0, 0, 0, 0.5);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 10vw;
-            height: 10vw;
-            font-size: 5vw;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
             cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
         }
         
         #pause-screen {
@@ -168,7 +133,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.5);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -176,94 +141,39 @@
             color: white;
             z-index: 45;
         }
-        
-        #resume-btn {
-            background: linear-gradient(to bottom, #0099FF, #0066CC);
-            border: none;
-            padding: 3% 6%;
-            font-size: 4vw;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 5%;
-            color: white;
-            text-shadow: 0 0 3px black;
-            box-shadow: 0 3px 0 #004488;
-        }
-        
-        #resume-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #004488;
-        }
-        
-        .title {
-            font-size: 8vw;
-            margin-bottom: 5%;
-            color: #FFCC00;
-            text-shadow: 0 0 10px rgba(255,204,0,0.5);
-        }
-        
-        .instructions {
-            font-size: 3.5vw;
-            margin-bottom: 8%;
-            color: #CCCCCC;
-        }
-        
-        .particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .particle {
-            position: absolute;
-            background: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            pointer-events: none;
+
+        /* Mobile devices (portrait) - 3:4 aspect ratio */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #game-container {
+                width: 90vw;
+                height: 120vw; /* 3:4 aspect ratio (90 * 4/3 = 120) */
+                max-height: 90vh;
+                max-width: calc(90vh * 3/4); /* Maintain 3:4 aspect ratio */
+            }
         }
 
-        /* Desktop specific styles */
-        @media (min-aspect-ratio: 3/4) {
+        /* Mobile devices (landscape) - maintain 3:2 aspect ratio */
+        @media (max-width: 768px) and (orientation: landscape) {
             #game-container {
-                width: 60vh; /* 3:2 aspect ratio width */
-                height: 40vh; /* 3:2 aspect ratio height */
+                width: 90vw;
+                height: 60vw; /* 3:2 aspect ratio */
+                max-height: 90vh;
+                max-width: calc(90vh * 3/2); /* Maintain 3:2 aspect ratio */
             }
-            
-            #score-display {
-                font-size: 2.5vh;
-            }
-            
-            #restart-btn, #resume-btn {
-                font-size: 2vh;
-                padding: 1.5% 3%;
-            }
-            
-            #start-btn {
-                font-size: 2.5vh;
-                padding: 2% 4%;
-            }
-            
-            .title {
-                font-size: 4vh;
-            }
-            
-            .instructions {
-                font-size: 1.8vh;
-            }
-            
-            #music-toggle {
-                width: 5vh;
-                height: 5vh;
-                font-size: 2.5vh;
+        }
+
+        /* PC and tablets - 3:2 aspect ratio */
+        @media (min-width: 769px) {
+            #game-container {
+                width: 600px;
+                height: 400px; /* 3:2 aspect ratio */
             }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div class="particles" id="particles"></div>
-        <div id="player"><img src="UQH.gif" width="100%" height="100%"></div>
+        <div id="player"><img src="UQH.gif" width="60" height="60"></div>
         <div id="ground"></div>
         <div id="score-display">0</div>
         <div id="game-over">
@@ -277,8 +187,8 @@
             <button id="resume-btn">Resume</button>
         </div>
         <div id="start-screen">
-            <h1 class="title">Geometry Dash Lite</h1>
-            <p class="instructions">Press SPACE, UP ARROW, or TAP to jump</p>
+            <h1>Geometry Dash Lite</h1>
+            <p>Press SPACE, UP ARROW, or CLICK to jump</p>
             <button id="start-btn">Start Game</button>
         </div>
     </div>
@@ -314,10 +224,11 @@
         const gameMusic = document.getElementById('game-music');
         const jumpSound = document.getElementById('jump-sound');
         const deathSound = document.getElementById('death-sound');
-        const particlesContainer = document.getElementById('particles');
         
-        let gameHeight, gameWidth;
-        let playerY, playerX;
+        let gameHeight = gameContainer.offsetHeight;
+        let gameWidth = gameContainer.offsetWidth;
+        let playerY = gameHeight - 60 - 20; // 60 = player height, 20 = ground height
+        let playerX = 50;
         let gravity = 0.8;
         let velocity = 0;
         let jumpForce = -16;
@@ -333,20 +244,15 @@
         let isMusicOn = false;
         let isJumping = false;
         let highScore = localStorage.getItem('gdHighScore') || 0;
-        let particleInterval;
-        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         // Initialize game
         function init() {
+            // Update game dimensions based on current container size
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
             
-            const playerSize = gameHeight * 0.12; // 12% of game height
-            player.style.width = playerSize + 'px';
-            player.style.height = playerSize + 'px';
-            
-            playerY = gameHeight - playerSize - (gameHeight * 0.05); // 5% for ground
-            playerX = gameWidth * 0.1; // 10% from left
+            playerY = gameHeight - 60 - 20;
+            playerX = 50;
             velocity = 0;
             score = 0;
             currentGameSpeed = baseGameSpeed;
@@ -365,64 +271,6 @@
             // Hide game over screen
             gameOverScreen.style.display = 'none';
             pauseScreen.style.display = 'none';
-            
-            // Start particle effects
-            createParticles();
-        }
-        
-        // Create background particles
-        function createParticles() {
-            clearInterval(particleInterval);
-            particlesContainer.innerHTML = '';
-            
-            const particleCount = Math.floor(gameWidth * gameHeight / 1000);
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                const size = Math.random() * 3 + 1;
-                const posX = Math.random() * gameWidth;
-                const posY = Math.random() * gameHeight;
-                const opacity = Math.random() * 0.5 + 0.1;
-                const duration = Math.random() * 10 + 10;
-                
-                particle.style.width = size + 'px';
-                particle.style.height = size + 'px';
-                particle.style.left = posX + 'px';
-                particle.style.top = posY + 'px';
-                particle.style.opacity = opacity;
-                particle.style.animation = `float ${duration}s linear infinite`;
-                
-                particlesContainer.appendChild(particle);
-            }
-            
-            // Add CSS for particle animation
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes float {
-                    0% { transform: translateY(0); }
-                    50% { transform: translateY(${gameHeight}px); }
-                    100% { transform: translateY(0); }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Move particles continuously
-            particleInterval = setInterval(() => {
-                const allParticles = document.querySelectorAll('.particle');
-                allParticles.forEach(particle => {
-                    const currentTop = parseFloat(particle.style.top);
-                    let newTop = currentTop + 0.5;
-                    
-                    if (newTop > gameHeight) {
-                        newTop = -10;
-                        particle.style.left = Math.random() * gameWidth + 'px';
-                    }
-                    
-                    particle.style.top = newTop + 'px';
-                });
-            }, 50);
         }
         
         // Start game
@@ -452,15 +300,11 @@
             velocity += gravity;
             playerY += velocity;
             
-            const playerSize = parseFloat(player.style.height);
-            const groundHeight = gameHeight * 0.05;
-            
             // Check for collisions with ground
-            if (playerY > gameHeight - playerSize - groundHeight) {
-                playerY = gameHeight - playerSize - groundHeight;
+            if (playerY > gameHeight - 60 - 20) {
+                playerY = gameHeight - 60 - 20;
                 velocity = 0;
                 isJumping = false;
-                player.style.transform = 'scaleX(-1)';
             }
             
             // Check for collisions with ceiling
@@ -475,8 +319,8 @@
                 createObstacle();
                 lastObstacleTime = currentTime;
                 
-                // Randomize next obstacle time (decreases as score increases)
-                obstacleFrequency = Math.max(800, 1500 - (score * 10));
+                // Randomize next obstacle time
+                obstacleFrequency = 1000 + Math.random() * 1000;
             }
             
             // Move obstacles and check for collisions
@@ -492,24 +336,23 @@
                     obstacle.passed = true;
                     score++;
                     scoreDisplay.textContent = score;
-                    // Increase speed gradually
-                    currentGameSpeed = baseGameSpeed + (score * 0.05);
+                    // Increase speed by 0.025 per score
+                    currentGameSpeed = baseGameSpeed + (score * 0.025);
                 }
                 
                 // Check for collision with player
                 if (
-                    playerX + playerSize > obstacleX && 
+                    playerX + 60 > obstacleX && 
                     playerX < obstacleX + obstacle.width && 
-                    playerY + playerSize > obstacle.y && 
+                    playerY + 60 > obstacle.y && 
                     playerY < obstacle.y + obstacle.height
                 ) {
                     if (isMusicOn) deathSound.play();
                     gameOver();
-                    return;
                 }
                 
                 // Remove obstacles that are off screen
-                if (obstacleX < -obstacle.width) {
+                if (obstacleX < -100) {
                     gameContainer.removeChild(obstacle.element);
                     obstacles.splice(i, 1);
                 }
@@ -519,45 +362,31 @@
         // Render game
         function render() {
             player.style.top = playerY + 'px';
-            
-            // Add jump animation effect
-            if (isJumping) {
-                player.style.transform = 'scaleX(-1) translateY(-5px)';
-            } else {
-                player.style.transform = 'scaleX(-1)';
-            }
         }
         
-        // Create a new obstacle
+        // Create a new obstacle with medium width and jumpable heights
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            const playerSize = parseFloat(player.style.height);
-            const groundHeight = gameHeight * 0.05;
-            
-            // Random width between 5-10% of game width
-            const width = gameWidth * (0.05 + Math.random() * 0.05);
+            // Medium width (30-50px)
+            const width = 30 + Math.random() * 20;
             
             // Three height categories (all jumpable)
             const heightTypes = [
-                {name: "Short", min: 0.1, max: 0.25},    // 10-25% of game height
-                {name: "Medium", min: 0.25, max: 0.4},   // 25-40% of game height
-                {name: "Tall", min: 0.4, max: 0.55}      // 40-55% of game height
+                {name: "Short", min: 30, max: 60},    // 30-60px
+                {name: "Medium", min: 60, max: 100},  // 60-100px
+                {name: "Tall", min: 100, max: 140}    // 100-140px (still jumpable)
             ];
             
             const selectedType = heightTypes[Math.floor(Math.random() * heightTypes.length)];
-            const height = gameHeight * (selectedType.min + Math.random() * (selectedType.max - selectedType.min));
-            const y = gameHeight - height - groundHeight;
+            const height = selectedType.min + Math.random() * (selectedType.max - selectedType.min);
+            const y = gameHeight - height - 20;
             
             obstacle.style.left = gameWidth + 'px';
             obstacle.style.width = width + 'px';
             obstacle.style.height = height + 'px';
             obstacle.style.top = y + 'px';
-            
-            // Random color variation
-            const hue = 0 + Math.random() * 15; // Red to orange
-            obstacle.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
             
             gameContainer.appendChild(obstacle);
             
@@ -575,7 +404,6 @@
             if (!gameIsRunning || gameIsPaused || isJumping) return;
             velocity = jumpForce;
             isJumping = true;
-            player.style.transform = 'scaleX(-1) translateY(-5px)';
             if (isMusicOn) jumpSound.play();
         }
         
@@ -633,7 +461,6 @@
                 } else if (gameIsRunning && !gameIsPaused) {
                     jump();
                 }
-                e.preventDefault();
             }
             
             if (e.key === 'Escape' && gameIsRunning) {
@@ -642,7 +469,6 @@
                 } else {
                     pauseGame();
                 }
-                e.preventDefault();
             }
         });
         
@@ -654,52 +480,33 @@
             }
         });
         
-        startBtn.addEventListener('click', startGame);
-        restartBtn.addEventListener('click', startGame);
-        resumeBtn.addEventListener('click', resumeGame);
-        musicToggle.addEventListener('click', toggleMusic);
+        startBtn.addEventListener('click', () => {
+            startGame();
+        });
         
-        // Touch support for mobile
-        gameContainer.addEventListener('touchstart', (e) => {
-            if (gameIsRunning && !gameIsPaused) {
-                jump();
-                e.preventDefault();
-            } else if (startScreen.style.display === 'none' && !gameIsPaused) {
-                startGame();
-                e.preventDefault();
-            }
-        }, { passive: false });
+        restartBtn.addEventListener('click', () => {
+            startGame();
+        });
+        
+        resumeBtn.addEventListener('click', () => {
+            resumeGame();
+        });
+        
+        musicToggle.addEventListener('click', toggleMusic);
         
         // Handle window resize
         window.addEventListener('resize', () => {
             gameHeight = gameContainer.offsetHeight;
             gameWidth = gameContainer.offsetWidth;
-            
+            // Reset player position in case aspect ratio changed
             if (gameIsRunning) {
-                // Adjust player position
-                const playerSize = parseFloat(player.style.height);
-                playerY = Math.min(playerY, gameHeight - playerSize - (gameHeight * 0.05));
+                playerY = gameHeight - 60 - 20;
                 player.style.top = playerY + 'px';
-                
-                // Adjust obstacles
-                obstacles.forEach(obstacle => {
-                    const groundHeight = gameHeight * 0.05;
-                    const newY = gameHeight - obstacle.height - groundHeight;
-                    obstacle.y = newY;
-                    obstacle.element.style.top = newY + 'px';
-                });
             }
         });
-        
+
         // Initialize high score display
         highScoreDisplay.textContent = highScore;
-        
-        // Preload audio
-        window.addEventListener('load', () => {
-            gameMusic.load();
-            jumpSound.load();
-            deathSound.load();
-        });
     </script>
 </body>
 </html>
