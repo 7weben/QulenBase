@@ -142,23 +142,23 @@
             z-index: 45;
         }
 
-        /* Mobile devices (portrait) - 3:4 aspect ratio */
+        /* Mobile portrait - 3:4 aspect ratio */
         @media (max-width: 768px) and (orientation: portrait) {
             #game-container {
                 width: 90vw;
-                height: 120vw; /* 3:4 aspect ratio (90 * 4/3 = 120) */
+                height: calc(90vw * 4/3); /* 3:4 aspect ratio */
                 max-height: 90vh;
-                max-width: calc(90vh * 3/4); /* Maintain 3:4 aspect ratio */
+                max-width: calc(90vh * 3/4); /* Prevent too wide */
             }
         }
 
-        /* Mobile devices (landscape) - maintain 3:2 aspect ratio */
+        /* Mobile landscape - 3:2 aspect ratio */
         @media (max-width: 768px) and (orientation: landscape) {
             #game-container {
                 width: 90vw;
-                height: 60vw; /* 3:2 aspect ratio */
+                height: calc(90vw * 2/3); /* 3:2 aspect ratio */
                 max-height: 90vh;
-                max-width: calc(90vh * 3/2); /* Maintain 3:2 aspect ratio */
+                max-width: calc(90vh * 3/2); /* Prevent too tall */
             }
         }
 
