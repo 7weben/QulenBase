@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Geometry Dash Lite</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quzambi Rush</title>
     <style>
         body {
             margin: 0;
@@ -14,58 +13,413 @@
             background: #222;
             font-family: Arial, sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
         }
         
         #game-container {
             position: relative;
             width: 800px;
-            height: 600px;
+            height: 400px;
             overflow: hidden;
-            background-image: url('NBG.png');
             background-size: cover;
+            background-position: center;
             border: 3px solid #444;
             border-radius: 5px;
         }
         
         #player {
             position: absolute;
-            width: 60px;
-            height: 60px;
-            background-image: url('UQH.gif');
-            background-size: contain;
-            transform: scaleX(-1);
+            width: 84px; /* 40px * 2.1 */
+            height: 84px; /* 40px * 2.1 */
             z-index: 10;
+            transform: scaleX(-1); /* Flip horizontally */
         }
         
         .obstacle {
             position: absolute;
-            background: #FF0000;
             z-index: 5;
-            border-radius: 5px;
+            width: 60px;
+            height: 120px;
         }
         
         #ground {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 30px;
-            background: #555;
+            height: 40px;
             z-index: 3;
+            background-size: repeat-x;
         }
         
         #score-display {
             position: absolute;
-            top: 15px;
-            right: 25px;
-            font-size: 28px;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
             color: white;
             z-index: 20;
-            background: rgba(0,0,0,0.5);
-            padding: 8px 15px;
-            border-radius: 8px;
+            text-shadow: 2px 2px 4px #000;
         }
         
+        #speed-display {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            font-size: 18px;
+            color: white;
+            z-index: 20;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 30;
+        }
+        
+        #restart-btn {
+            background-color: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            color: white;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 40;
+        }
+        
+        #start-btn {
+            background-color: #4CAF50;
+            border: none;
+            padding: 15px 30px;
+            font-size: 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            color: white;
+        }
+        
+        #music-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="music-toggle">🔊</button>
+    <div id="game-container">
+        <img id="player" src="https://i.imgur.com/UQH.gif" alt="Player">
+        <div id="ground"></div>
+        <div id="score-display">Score: 0</div>
+        <div id="speed-display">Speed: 5</div>
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <p>Your Score: <span id="final-score">0</span></p>
+            <p>Final Speed: <span id="final-speed">5</span></p>
+            <button id="restart-btn">Play Again</button>
+        </div>
+        <div id="start-screen">
+            <h1>Quzambi Rush</h1>
+            <p>Press SPACE or click to jump</p>
+            <button id="start-btn">Start Game</button>
+        </div>
+    </div>
+
+    <audio id="game-music" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="jump-sound">
+        <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="death-sound">
+        <source src="https://www.soundjay.com/buttons/sounds/button-10.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Game variables
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('game-container');
+        const ground = document.getElementById('ground');
+        const scoreDisplay = document.getElementById('score-display');
+        const speedDisplay = document.getElementById('speed-display');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalSpeedDisplay = document.getElementById('final-speed');
+        const restartBtn = document.getElementById('restart-btn');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const musicToggle = document.getElementById('music-toggle');
+        const gameMusic = document.getElementById('game-music');
+        const jumpSound = document.getElementById('jump-sound');
+        const deathSound = document.getElementById('death-sound');
+        
+        // Game assets
+        const backgrounds = [
+            'https://i.imgur.com/NBG.png',
+            'https://i.imgur.com/DBG.png'
+        ];
+        const groundTexture = 'https://i.imgur.com/FU1.gif';
+        const obstacleTexture = 'https://i.imgur.com/OB1.gif';
+        
+        let gameHeight = gameContainer.offsetHeight;
+        let gameWidth = gameContainer.offsetWidth;
+        let playerY = gameHeight - 84 - 40;
+        let playerX = 50;
+        let gravity = 0.8;
+        let velocity = 0;
+        let jumpForce = -15;
+        let gameIsRunning = false;
+        let score = 0;
+        let obstacles = [];
+        let obstacleFrequency = 1500;
+        let lastObstacleTime = 0;
+        let animationId;
+        let baseSpeed = 5;
+        let currentSpeed = 5;
+        let isMusicOn = false;
+        let isJumping = false;
+        let passedObstacles = new Set();
+        
+        // Initialize game
+        function init() {
+            // Set random background
+            const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+            gameContainer.style.backgroundImage = `url('${randomBg}')`;
+            
+            // Set ground texture
+            ground.style.backgroundImage = `url('${groundTexture}')`;
+            
+            playerY = gameHeight - 84 - 40;
+            playerX = 50;
+            velocity = 0;
+            score = 0;
+            currentSpeed = baseSpeed;
+            scoreDisplay.textContent = "Score: 0";
+            speedDisplay.textContent = "Speed: " + currentSpeed.toFixed(1);
+            passedObstacles.clear();
+            
+            // Clear all obstacles
+            obstacles.forEach(obstacle => {
+                if (obstacle.element.parentNode) {
+                    gameContainer.removeChild(obstacle.element);
+                }
+            });
+            obstacles = [];
+            
+            // Reset player position
+            player.style.top = playerY + 'px';
+            player.style.left = playerX + 'px';
+            
+            // Hide game over screen
+            gameOverScreen.style.display = 'none';
+        }
+        
+        // Start game
+        function startGame() {
+            init();
+            gameIsRunning = true;
+            startScreen.style.display = 'none';
+            lastObstacleTime = Date.now();
+            if (isMusicOn) gameMusic.play();
+            gameLoop();
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameIsRunning) return;
+            
+            update();
+            render();
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Update game state
+        function update() {
+            // Apply gravity
+            velocity += gravity;
+            playerY += velocity;
+            
+            // Ground collision
+            if (playerY > gameHeight - 84 - 40) {
+                playerY = gameHeight - 84 - 40;
+                velocity = 0;
+                isJumping = false;
+            }
+            
+            // Ceiling collision
+            if (playerY < 0) {
+                playerY = 0;
+                velocity = 0;
+            }
+            
+            // Generate new obstacles
+            const currentTime = Date.now();
+            if (currentTime - lastObstacleTime > obstacleFrequency) {
+                createObstacle();
+                lastObstacleTime = currentTime;
+                obstacleFrequency = 800 + Math.random() * 700;
+            }
+            
+            // Move obstacles and check collisions
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                const obstacleX = parseFloat(obstacle.element.style.left);
+                
+                // Move obstacle
+                obstacle.element.style.left = (obstacleX - currentSpeed) + 'px';
+                
+                // Scoring
+                if (!passedObstacles.has(obstacle.id) && obstacleX + obstacle.width < playerX) {
+                    passedObstacles.add(obstacle.id);
+                    score++;
+                    scoreDisplay.textContent = "Score: " + score;
+                    currentSpeed = baseSpeed + (score * 0.5);
+                    speedDisplay.textContent = "Speed: " + currentSpeed.toFixed(1);
+                }
+                
+                // Collision detection
+                if (
+                    playerX + 84 > obstacleX && 
+                    playerX < obstacleX + obstacle.width && 
+                    playerY + 84 > obstacle.y && 
+                    playerY < obstacle.y + obstacle.height
+                ) {
+                    if (isMusicOn) deathSound.play();
+                    gameOver();
+                }
+                
+                // Remove off-screen obstacles
+                if (obstacleX < -100) {
+                    gameContainer.removeChild(obstacle.element);
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Render game
+        function render() {
+            player.style.top = playerY + 'px';
+        }
+        
+        // Create obstacle
+        function createObstacle() {
+            const obstacle = document.createElement('img');
+            obstacle.className = 'obstacle';
+            obstacle.src = obstacleTexture;
+            const y = gameHeight - 120 - 40;
+            
+            obstacle.style.left = gameWidth + 'px';
+            obstacle.style.top = y + 'px';
+            
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                width: 60,
+                height: 120,
+                y: y,
+                id: Date.now()
+            });
+        }
+        
+        // Player jump
+        function jump() {
+            if (!gameIsRunning || isJumping) return;
+            velocity = jumpForce;
+            isJumping = true;
+            if (isMusicOn) jumpSound.play();
+        }
+        
+        // Game over
+        function gameOver() {
+            gameIsRunning = false;
+            cancelAnimationFrame(animationId);
+            gameMusic.pause();
+            gameMusic.currentTime = 0;
+            
+            finalScoreDisplay.textContent = score;
+            finalSpeedDisplay.textContent = currentSpeed.toFixed(1);
+            gameOverScreen.style.display = 'block';
+        }
+        
+        // Toggle music
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            musicToggle.textContent = isMusicOn ? "🔊" : "🔇";
+            
+            if (isMusicOn && gameIsRunning) {
+                gameMusic.play();
+            } else {
+                gameMusic.pause();
+                gameMusic.currentTime = 0;
+            }
+        }
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                if (!gameIsRunning && startScreen.style.display === 'none') {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+        
+        gameContainer.addEventListener('click', () => {
+            if (gameIsRunning) {
+                jump();
+            } else if (startScreen.style.display === 'none') {
+                startGame();
+            }
+        });
+        
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        musicToggle.addEventListener('click', toggleMusic);
+        
+        window.addEventListener('resize', () => {
+            gameHeight = gameContainer.offsetHeight;
+            gameWidth = gameContainer.offsetWidth;
+        });
+    </script>
+</body>
+</html>        
         #game-over {
             position: absolute;
             top: 50%;
